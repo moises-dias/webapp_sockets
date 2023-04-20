@@ -1,36 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import io from 'socket.io-client';
 
 function App() {
   const [message, setMessage] = useState("");
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/")
-      .then(res => res.text())
-      .then(setMessage);
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+    return () => newSocket.disconnect();
   }, []);
 
   useEffect(() => {
-    const socket = io('http://localhost:5000');
-    
-    const handleMouseMove = (e) => {
-      const { clientX, clientY } = e;
-      socket.emit('mousemove', { x: clientX, y: clientY });
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      socket.disconnect();
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
+    if (!socket) return;
+
+    socket.on('new_point', data => {
+      console.log(data);
+      setMessage(`User ${data.user} clicked on (${data.x}, ${data.y})`);
+    });
+
+    return () => socket.off('new_point');
+  }, [socket]);
+
+  const handleClick = (e) => {
+    if (!socket) return;
+
+    const position = { x: e.clientX, y: e.clientY };
+    socket.emit('click', position);
+  };
 
   return (
-    <div>
-      <h1>Hello, World!</h1>
+    <div onClick={handleClick}>
+      <h1>Hello World!</h1>
       <p>{message}</p>
-      <p>test</p>
     </div>
   );
 }
