@@ -6,7 +6,7 @@ function App() {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io('http://192.168.59.100:30886');
     setSocket(newSocket);
     return () => newSocket.disconnect();
   }, []);
@@ -31,7 +31,7 @@ function App() {
 
   return (
     <div onClick={handleClick}>
-      <h1>Hello World!</h1>
+      <h1>Hello World!!!</h1>
       <p>{message}</p>
     </div>
   );
