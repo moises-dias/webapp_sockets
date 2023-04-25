@@ -86,7 +86,6 @@ def get_shadows(user):
 
     canvas_angles = get_canvas_edges_angles(user, canvas)
 
-    # se diferença maior de 180 printa algo arruma dpois
     upper_angle_limit = max([w['angle'] for w in wall_info])
     lower_angle_limit = min([w['angle'] for w in wall_info])
 
@@ -96,7 +95,6 @@ def get_shadows(user):
             if lower_angle_limit < canvas_info["angle"] < upper_angle_limit:
                 edges_to_add_on_shadow.append(canvas_info)
     else:
-        print("-------------------------")
         for canvas_info in canvas_angles:
             if canvas_info["angle"] < lower_angle_limit or canvas_info["angle"] > upper_angle_limit:
                 edges_to_add_on_shadow.append(canvas_info)
@@ -106,20 +104,32 @@ def get_shadows(user):
     first_wall_point = min(wall_info, key=lambda x: x['angle'])
     last_wall_point = max(wall_info, key=lambda x: x['angle'])
 
-    shadow_points.append(first_wall_point['coord'])
     shadow_points.append(first_wall_point['limit'])
+    shadow_points.append(first_wall_point['coord'])
+    shadow_points.append(last_wall_point['coord'])
+    shadow_points.append(last_wall_point['limit'])
+
+    for edge in edges_to_add_on_shadow:
+        if edge['angle'] < last_wall_point['angle']:
+            edge['angle'] += 360
 
     sorted_edges = sorted(edges_to_add_on_shadow, key=lambda x: x['angle'])
-    print("-----")
-    print(sorted_edges)
-    print("-----")
-    print(wall_info)
-    print("-----")
-
-    for edge in sorted_edges:
-        shadow_points.append(edge['coord'])
+    # for edge in sorted_edges:
+    #     shadow_points.append(edge['coord'])
     
-    shadow_points.append(last_wall_point['limit'])
-    shadow_points.append(last_wall_point['coord'])
+    current_point = last_wall_point['limit']
+    if sorted_edges:
+        for _ in range(4):
+            for edge in sorted_edges:
+                edge["distance"] = math.hypot(edge['coord'][0] - current_point[0], edge['coord'][1] - current_point[1])
+            if not sorted_edges:
+                break
 
+            new_point = min(sorted_edges, key=lambda d: d['distance'])
+            sorted_edges.remove(new_point)
+            shadow_points.append(new_point['coord'])
+
+
+
+    
     return shadow_points

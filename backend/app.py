@@ -46,15 +46,16 @@ def handle_move(data):
     for usr in users:
         if usr['id'] == request.sid:
             if data['direction'] == 87: # w
-                usr['y'] -= 1
+                usr['y'] -= 10
             elif data['direction'] == 83: # s
-                usr['y'] += 1
+                usr['y'] += 10
             elif data['direction'] == 65: # a
-                usr['x'] -= 1
+                usr['x'] -= 10
             elif data['direction'] == 68: # d
-                usr['x'] += 1
+                usr['x'] += 10
             usr['shadow'] = get_shadows((usr['x'], usr['y']))
             print_green(usr['shadow'])
+            
             
             emit('update_users', users, broadcast=True)
             emit('update_shadow', usr['shadow'], room=request.sid)
