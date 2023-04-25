@@ -10,6 +10,7 @@ const MOVEMENT_KEYS = [87, 83, 65, 68];
 function App() {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
+  const [shadows, setShadows] = useState([]);
   const canvasRef = useRef(null);
 
   const userName = (Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000).toString();
@@ -25,6 +26,24 @@ function App() {
       context.font = 'bold 20px sans-serif';
       context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
     }
+
+    // context.beginPath();
+    // // context.moveTo(30, 380);
+    // context.lineTo(30, 380);
+    // context.lineTo(11, 400);
+    // context.lineTo(0, 400);
+    // context.lineTo(0, 378);
+    // context.lineTo(20, 360);
+    // context.closePath();
+
+    context.beginPath();
+    shadows.forEach(point => {
+      context.lineTo(point[0], point[1]);
+    });
+    context.closePath();
+    
+    context.fillStyle = 'black';
+    context.fill();
   };
 
   useEffect(() => {
@@ -39,6 +58,12 @@ function App() {
     socket.on('update_users', users => {
       setUsers(users);
       console.log(users);
+    });
+
+    socket.on('update_shadow', shadows => {
+      setShadows(shadows);
+      console.log(shadows);
+      // console.log("-----------");
     });
 
     return () => {

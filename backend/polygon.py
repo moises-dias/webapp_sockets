@@ -50,12 +50,12 @@ def get_canvas_edges_angles(point, canvas):
         edge["angle"] = angle_in_degrees
     return edges
 
-def get_shadows(user, wall):
+def get_shadows(user):
 
-    canvas = (100, 100)
+    canvas = (400, 400)
 
-    wall1 = (50, 75)
-    wall2 = (25, 50)
+    wall1 = (20, 360)
+    wall2 = (30, 380)
     
     wall = [wall1, wall2]
     wall_info = []
@@ -79,7 +79,7 @@ def get_shadows(user, wall):
         
         print(f"intercepta y={limit_y} em x={x}")
         print()
-        if abs(x) > abs(y):
+        if 0 <= y <= canvas[1]:
             wall_limit = (limit_x, y)
             print(f"will be used the {limit_x},{y}")
         else:
@@ -134,11 +134,5 @@ def get_shadows(user, wall):
 
 
 
-        
-
-user = (50, 50)
-walls = [
-    [[75, 50], [50, 25]]
-]
-wall = ((75,50), (50, 25), (25, 50), (50, 75))
-get_shadows(user, wall)
+user = (200, 200)
+get_shadows(user)
