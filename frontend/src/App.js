@@ -27,15 +27,6 @@ function App() {
       context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
     }
 
-    // context.beginPath();
-    // // context.moveTo(30, 380);
-    // context.lineTo(30, 380);
-    // context.lineTo(11, 400);
-    // context.lineTo(0, 400);
-    // context.lineTo(0, 378);
-    // context.lineTo(20, 360);
-    // context.closePath();
-
     context.beginPath();
     shadows.forEach(point => {
       context.lineTo(point[0], point[1]);
@@ -57,17 +48,15 @@ function App() {
 
     socket.on('update_users', users => {
       setUsers(users);
-      console.log(users);
     });
 
     socket.on('update_shadow', shadows => {
       setShadows(shadows);
-      console.log(shadows);
-      // console.log("-----------");
     });
 
     return () => {
       socket.off('update_users');
+      socket.off('update_shadow');
     };
   }, [socket]);
 
