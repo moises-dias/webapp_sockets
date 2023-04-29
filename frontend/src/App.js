@@ -8,13 +8,13 @@ const CANVAS_BORDER_STYLE = '1px solid black';
 const CIRCLE_RADIUS = 50;
 const MOVEMENT_KEYS = [87, 83, 65, 68];
 
-// const backgroundImage = './background.png';
-// const image = new Image();
+const image = new Image();
 
 function App() {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
   const [shadows, setShadows] = useState([]);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const canvasRef = useRef(null);
 
   const userName = (Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000).toString();
@@ -22,31 +22,31 @@ function App() {
   const drawCanvas = (context, users) => {
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    const image = new Image();
-    image.onload = () => {
-      context.drawImage(image, 0, 0);
-      for (let i = 0; i < users.length; i++) {
-        context.beginPath();
-        context.arc(users[i].x, users[i].y, CIRCLE_RADIUS, 0, 2 * Math.PI, false);
-        context.fillStyle = '#FF4136';
-        context.fill();
-        context.fillStyle = '#000';
-        context.font = 'bold 20px sans-serif';
-        context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
-      }
-  
-      shadows.forEach(shadow => {
-        context.beginPath();
-        shadow.forEach(point => {
-          context.lineTo(point[0], point[1]);
-        });
-        context.closePath();
-      
-        context.fillStyle = 'black';
-        context.fill();
-        context.stroke();
+    // const image = new Image();
+    // image.onload = () => {
+    // };
+    context.drawImage(image, 0, 0);
+    for (let i = 0; i < users.length; i++) {
+      context.beginPath();
+      context.arc(users[i].x, users[i].y, CIRCLE_RADIUS, 0, 2 * Math.PI, false);
+      context.fillStyle = '#FF4136';
+      context.fill();
+      context.fillStyle = '#000';
+      context.font = 'bold 20px sans-serif';
+      context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
+    }
+
+    shadows.forEach(shadow => {
+      context.beginPath();
+      shadow.forEach(point => {
+        context.lineTo(point[0], point[1]);
       });
-    };
+      context.closePath();
+    
+      context.fillStyle = 'black';
+      context.fill();
+      context.stroke();
+    });
     image.src = backgroundImage;
     
 
@@ -91,11 +91,24 @@ function App() {
   }, [socket]);
 
   useEffect(() => {
+    if (!isImageLoaded) {
+      return;
+    }
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     drawCanvas(context, users);
     return () => {};
-  }, [users]);
+  }, [isImageLoaded, users]);
+
+  useEffect(() => {
+    // const image = new Image();
+    image.src = backgroundImage;
+    image.onload = () => {
+      setIsImageLoaded(true);
+      console.log('Image loaded!');
+    };
+    console.log("foo")
+  }, []);
 
   return (
     <div>
