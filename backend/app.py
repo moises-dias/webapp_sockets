@@ -1,9 +1,13 @@
 from flask import Flask, request
 from flask_socketio import SocketIO, emit
-from shadow import get_shadow_point_list
+# from shadow import get_shadow_point_list
+from shadow_v2 import get_shadows
 
 def print_green(text):
     print(f'\033[1;32m{text}\033[0m')
+
+def print_red(text):
+    print(f'\033[1;31m{text}\033[0m')
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -19,7 +23,7 @@ def handle_connect():
     users.append(new_user)
     emit('update_users', users, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
-    new_user['shadow'] = get_shadow_point_list((new_user['x'], new_user['y']))
+    new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
     emit('update_shadow', new_user['shadow'], room=request.sid)
 
 
@@ -53,8 +57,7 @@ def handle_move(data):
                 usr['x'] -= 10
             elif data['direction'] == 68: # d
                 usr['x'] += 10
-            usr['shadow'] = get_shadow_point_list((usr['x'], usr['y']))
-            print_green(usr['shadow'])
+            usr['shadow'] = get_shadows((usr['x'], usr['y']))
             print_green(f"CASTED {len(usr['shadow'])} SHADOWS.")
             
             
