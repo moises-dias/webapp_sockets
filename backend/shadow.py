@@ -49,14 +49,14 @@ def get_canvas_edges_angles(point, canvas):
         edge["angle"] = angle_in_degrees
     return edges
 
-def get_shadows(user):
+def get_shadows(user, wall):
 
     canvas = (400, 400)
 
-    wall1 = (100, 200)
-    wall2 = (200, 300)
+    # wall1 = (100, 200)
+    # wall2 = (200, 300)
     
-    wall = [wall1, wall2]
+    # wall = [wall1, wall2]
     wall_info = []
 
     for w in wall:
@@ -128,8 +128,22 @@ def get_shadows(user):
             new_point = min(sorted_edges, key=lambda d: d['distance'])
             sorted_edges.remove(new_point)
             shadow_points.append(new_point['coord'])
+            current_point = new_point['coord']
 
 
 
     
     return shadow_points
+
+def get_shadow_point_list(user):
+    
+    walls = [
+        [(100, 200), (200, 300)],
+        [(250, 250), (300, 300)],
+        [(300, 200), (300, 100)]
+    ]
+    shadow_points_list = []
+    for wall in walls:
+        shadow_points_list.append(get_shadows(user, wall))
+    
+    return shadow_points_list

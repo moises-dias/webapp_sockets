@@ -27,14 +27,19 @@ function App() {
       context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
     }
 
-    context.beginPath();
-    shadows.forEach(point => {
-      context.lineTo(point[0], point[1]);
-    });
-    context.closePath();
+    shadows.forEach(shadow => {
+      context.beginPath();
+      shadow.forEach(point => {
+        context.lineTo(point[0], point[1]);
+      });
+      context.closePath();
     
-    context.fillStyle = 'black';
-    context.fill();
+      context.fillStyle = 'black';
+      context.fill();
+      context.stroke();
+    });
+    
+
   };
 
   useEffect(() => {
