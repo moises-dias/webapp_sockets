@@ -69,21 +69,54 @@ function App() {
     };
   }, [socket]);
 
-  useEffect(() => {
-    if (!socket) return;
+useEffect(() => {
+  if (!socket) return;
 
-    const handleKeyDown = (event) => {
-      if (MOVEMENT_KEYS.includes(event.keyCode)) {
-        socket.emit('move', { user: userName, direction: event.keyCode });
-      }
-    };
+  let intervalId;
+  let activeKeys = [];
 
-    document.addEventListener('keydown', handleKeyDown);
+  const handleKeyDown = (keyCode) => {
+    if (MOVEMENT_KEYS.includes(keyCode)) {
+      socket.emit('move', { user: userName, direction: keyCode });
+    }
+  };
 
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [socket]);
+  const handleKeyPress = (event) => {
+    if (event.repeat) return;
+    const index = activeKeys.indexOf(event.keyCode);
+    if (index > -1) {
+      return;
+    }
+    activeKeys.push(event.keyCode);
+    if (intervalId) {
+      return;
+    }
+    intervalId = setInterval(() => {
+      activeKeys.forEach(keyCode => handleKeyDown(keyCode));
+    }, 50);
+
+    console.log(intervalId)
+  };
+
+  const handleKeyRelease = (event) => {
+    const index = activeKeys.indexOf(event.keyCode);
+    if (index > -1) {
+      activeKeys.splice(index, 1);
+    }
+    if (activeKeys.length === 0) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
+
+  document.addEventListener('keydown', handleKeyPress);
+  document.addEventListener('keyup', handleKeyRelease);
+
+  return () => {
+    document.removeEventListener('keydown', handleKeyPress);
+    document.removeEventListener('keyup', handleKeyRelease);
+  };
+}, [socket]);
 
   useEffect(() => {
     if (!isImageLoaded) {
