@@ -55,6 +55,7 @@ def handle_move(data):
                 usr['x'] += 10
             usr['shadow'] = get_shadow_point_list((usr['x'], usr['y']))
             print_green(usr['shadow'])
+            print_green(f"CASTED {len(usr['shadow'])} SHADOWS.")
             
             
             emit('update_users', users, broadcast=True)
