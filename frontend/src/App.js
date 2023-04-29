@@ -21,10 +21,6 @@ function App() {
 
   const drawCanvas = (context, users) => {
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-    // const image = new Image();
-    // image.onload = () => {
-    // };
     context.drawImage(image, 0, 0);
     for (let i = 0; i < users.length; i++) {
       context.beginPath();
@@ -35,7 +31,7 @@ function App() {
       context.font = 'bold 20px sans-serif';
       context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
     }
-
+    
     shadows.forEach(shadow => {
       context.beginPath();
       shadow.forEach(point => {
@@ -47,7 +43,6 @@ function App() {
       context.fill();
       context.stroke();
     });
-    image.src = backgroundImage;
     
 
   };
@@ -101,7 +96,6 @@ function App() {
   }, [isImageLoaded, users]);
 
   useEffect(() => {
-    // const image = new Image();
     image.src = backgroundImage;
     image.onload = () => {
       setIsImageLoaded(true);
