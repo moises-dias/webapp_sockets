@@ -6,7 +6,6 @@ import playerImage from './player.png';
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 400;
 const CANVAS_BORDER_STYLE = '1px solid black';
-const CIRCLE_RADIUS = 50;
 const MOVEMENT_KEYS = [87, 83, 65, 68];
 
 const image = new Image();
@@ -42,6 +41,7 @@ function App({ userName }) {
   const [users, setUsers] = useState([]);
   const [shadows, setShadows] = useState([]);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [lastAngle, setLastAngle] = useState(0);
   const [mouseCursor, setMouseCursor] = useState({ x: 0, y: 0 });
   const canvasRef = useRef(null);
 
@@ -52,23 +52,18 @@ function App({ userName }) {
 
   const drawPlayers = (context, users) => {
     for (let i = 0; i < users.length; i++) {
-      const angle = Math.atan2(mouseCursor.y - users[i].y, mouseCursor.x - users[i].x);
+      // const angle = Math.atan2(mouseCursor.y - users[i].y, mouseCursor.x - users[i].x);
       context.save();
       context.translate(users[i].x, users[i].y);
-      context.rotate(angle + Math.PI / 2);
+      context.rotate(users[i].angle + Math.PI / 2);
       context.drawImage(userImage, -15, -15, 30, 30);
       context.restore();
       context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
     }
   };
 
-  const drawSelf = (context, users) => {
-    const player = users.find(item => item.user === userName);
-    if (player === undefined) {
-      console.log("PLAYER UNDEFINED");
-      return;
-    }
-    const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
+  const drawSelf = (context, player, angle) => {
+
     context.save();
     context.translate(player.x, player.y);
     context.rotate(angle + Math.PI / 2);
@@ -136,6 +131,19 @@ function App({ userName }) {
 
     const handleKeyDown = (keyCode) => {
       if (MOVEMENT_KEYS.includes(keyCode)) {
+        const player = users.find(item => item.user === userName);
+        if (player != undefined) {
+          const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x); // POR ALGUM MOTIVO ESSE ANGULO NAO MUDA, PRINTAR O PLAYER E O MOUSECURSOR E INVESTIGAR
+          console.log(angle)
+          console.log(player)
+          if (Math.abs(angle - lastAngle) > 0.5) {
+            setLastAngle(angle)
+            socket.emit('update_angle', { user: userName, angle: angle });
+          }
+        }
+        else {
+          console.log('player undefined on handle key')
+        }
         socket.emit('move', { user: userName, direction: keyCode });
       }
     };
@@ -183,20 +191,45 @@ function App({ userName }) {
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     drawCanvas(context);
-    drawSelf(context, users);
     drawPlayers(context, users);
+
+    const player = users.find(item => item.user === userName);
+    if (player === undefined) {
+      console.log("PLAYER UNDEFINED");
+      return;
+    }
+    const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
+    if (Math.abs(angle - lastAngle) > 0.5) {
+      setLastAngle(angle)
+      socket.emit('update_angle', { user: userName, angle: angle });
+    }
+
+
+    drawSelf(context, player, angle);
     drawShadows(context);
     return () => {};
   }, [isImageLoaded, users]);
 
-  // draw when user move mouse
+  // draw when user move the MOUSE
   useEffect(() => {
     if (!isImageLoaded) {
       return;
     }
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
-    drawSelf(context, users);
+
+    const player = users.find(item => item.user === userName);
+    if (player === undefined) {
+      console.log("PLAYER UNDEFINED");
+      return;
+    }
+    const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
+    if (Math.abs(angle - lastAngle) > 0.5) {
+      setLastAngle(angle)
+      socket.emit('update_angle', { user: userName, angle: angle });
+    }
+
+    drawSelf(context, player, angle);
     return () => {};
   }, [mouseCursor]);
 

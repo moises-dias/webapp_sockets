@@ -19,7 +19,7 @@ users = []
 def handle_connect():
     global users
     name = request.args.get('name')
-    new_user = {'id': request.sid, 'user': name, 'x': 0, 'y': 0, 'shadow': []}
+    new_user = {'id': request.sid, 'user': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0}
     users.append(new_user)
     emit('update_users', users, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
@@ -34,6 +34,14 @@ def handle_disconnect():
     users = [usr for usr in users if usr['id'] != request.sid]
     emit('update_users', users, broadcast=True)
     print_green(f"{request.sid} disconnected")
+
+
+@socketio.on('update_angle')
+def handle_update_angle(data):
+    for usr in users:
+        if usr['id'] == request.sid:
+            usr['angle'] = data['angle']
+            emit('update_users', users, broadcast=True)
 
 @socketio.on('move')
 def handle_move(data):
