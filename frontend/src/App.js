@@ -12,7 +12,32 @@ const MOVEMENT_KEYS = [87, 83, 65, 68];
 const image = new Image();
 const userImage = new Image();
 
-function App() {
+function InputScreen({ onSubmit }) {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit(inputValue);
+  }
+
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+  }
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Name:
+          <input type="text" value={inputValue} onChange={handleInputChange} />
+        </label>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  );
+}
+
+function App({ userName }) {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
   const [shadows, setShadows] = useState([]);
@@ -20,18 +45,12 @@ function App() {
   const [rotation, setRotation] = useState(0);
   const canvasRef = useRef(null);
 
-  const userName = (Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000).toString();
-
-  const drawCanvas = (context, users) => {
+  const drawCanvas = (context) => {
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     context.drawImage(image, 0, 0);
+  };
 
-    context.save();
-    context.translate(200, 200);
-    context.rotate(rotation + Math.PI / 2);
-    context.drawImage(userImage, -10, -10, 20, 20);
-    context.restore();
-
+  const drawPlayers = (context, users) => {
     for (let i = 0; i < users.length; i++) {
       context.beginPath();
       context.arc(users[i].x, users[i].y, CIRCLE_RADIUS, 0, 2 * Math.PI, false);
@@ -41,7 +60,22 @@ function App() {
       context.font = 'bold 20px sans-serif';
       context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
     }
-    
+  };
+
+  const drawSelf = (context, users) => {
+    console.log("drawing self")
+    console.log(users)
+    console.log(userName)
+    const player = users.find(item => item.user === userName);
+    console.log(player)
+    context.save();
+    context.translate(200, 200);
+    context.rotate(rotation + Math.PI / 2);
+    context.drawImage(userImage, -10, -10, 20, 20);
+    context.restore();
+  };
+
+  const drawShadows = (context) => {
     shadows.forEach(shadow => {
       context.beginPath();
       shadow.forEach(point => {
@@ -53,15 +87,16 @@ function App() {
       context.fill();
       context.stroke();
     });
-    
-
   };
+
+  // connect to socket
   useEffect(() => {
     const newSocket = io('http://localhost:5000', { query: { name: userName} });
     setSocket(newSocket);
     return () => newSocket.disconnect();
   }, []);
 
+  // update angle when mouse move
   useEffect(() => {
     const handleMouseMove = (event) => {
       const { clientX, clientY } = event;
@@ -69,7 +104,6 @@ function App() {
       const centerY = CANVAS_HEIGHT / 2;
       const angle = Math.atan2(clientY - centerY, clientX - centerX);
       setRotation(angle);
-      console.log(angle);
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
@@ -77,6 +111,7 @@ function App() {
     };
   }, []);
 
+  // handle backend socket messages
   useEffect(() => {
     if (!socket) return;
 
@@ -94,72 +129,87 @@ function App() {
     };
   }, [socket]);
 
-useEffect(() => {
-  if (!socket) return;
+  // mouse
+  useEffect(() => {
+    if (!socket) return;
 
-  let intervalId;
-  let activeKeys = [];
+    let intervalId;
+    let activeKeys = [];
 
-  const handleKeyDown = (keyCode) => {
-    if (MOVEMENT_KEYS.includes(keyCode)) {
-      socket.emit('move', { user: userName, direction: keyCode });
-    }
-  };
+    const handleKeyDown = (keyCode) => {
+      if (MOVEMENT_KEYS.includes(keyCode)) {
+        socket.emit('move', { user: userName, direction: keyCode });
+      }
+    };
 
-  const handleKeyPress = (event) => {
-    if (event.repeat) return;
-    const index = activeKeys.indexOf(event.keyCode);
-    if (index > -1) {
-      return;
-    }
-    activeKeys.push(event.keyCode);
-    if (intervalId) {
-      return;
-    }
-    intervalId = setInterval(() => {
-      activeKeys.forEach(keyCode => handleKeyDown(keyCode));
-    }, 50);
+    const handleKeyPress = (event) => {
+      if (event.repeat) return;
+      const index = activeKeys.indexOf(event.keyCode);
+      if (index > -1) {
+        return;
+      }
+      activeKeys.push(event.keyCode);
+      if (intervalId) {
+        return;
+      }
+      intervalId = setInterval(() => {
+        activeKeys.forEach(keyCode => handleKeyDown(keyCode));
+      }, 50);
+    };
 
-    console.log(intervalId)
-  };
+    const handleKeyRelease = (event) => {
+      const index = activeKeys.indexOf(event.keyCode);
+      if (index > -1) {
+        activeKeys.splice(index, 1);
+      }
+      if (activeKeys.length === 0) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
 
-  const handleKeyRelease = (event) => {
-    const index = activeKeys.indexOf(event.keyCode);
-    if (index > -1) {
-      activeKeys.splice(index, 1);
-    }
-    if (activeKeys.length === 0) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
-  };
+    document.addEventListener('keydown', handleKeyPress);
+    document.addEventListener('keyup', handleKeyRelease);
 
-  document.addEventListener('keydown', handleKeyPress);
-  document.addEventListener('keyup', handleKeyRelease);
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+      document.removeEventListener('keyup', handleKeyRelease);
+    };
+  }, [socket]);
 
-  return () => {
-    document.removeEventListener('keydown', handleKeyPress);
-    document.removeEventListener('keyup', handleKeyRelease);
-  };
-}, [socket]);
-
+  // draw when users or images are loaded
   useEffect(() => {
     if (!isImageLoaded) {
       return;
     }
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
-    drawCanvas(context, users);
+    drawCanvas(context);
+    drawSelf(context, users);
+    drawPlayers(context, users);
+    drawShadows(context);
     return () => {};
   }, [isImageLoaded, users]);
 
+  // draw when user move mouse
   useEffect(() => {
+    if (!isImageLoaded) {
+      return;
+    }
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    drawSelf(context, users);
+    return () => {};
+  }, [rotation]);
+
+  // load images
+  useEffect(() => {
+    // TODO improve this logic to load images in paralel
     image.src = backgroundImage;
     image.onload = () => {
       userImage.src = playerImage;
-      image.onload = () => {
+      userImage.onload = () => {
         setIsImageLoaded(true);
-        console.log('Images loaded!');
       };
     };
   }, []);
@@ -171,4 +221,18 @@ useEffect(() => {
   );
 }
 
-export default App;
+function Main() {
+  const [userName, setUserName] = useState(null);
+
+  const handleSubmit = (value) => {
+    setUserName(value);
+  }
+
+  return (
+    <div>
+      {userName ? <App userName={userName} /> : <InputScreen onSubmit={handleSubmit} />}
+    </div>
+  );
+}
+
+export default Main;
