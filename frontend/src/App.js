@@ -131,19 +131,6 @@ function App({ userName }) {
 
     const handleKeyDown = (keyCode) => {
       if (MOVEMENT_KEYS.includes(keyCode)) {
-        const player = users.find(item => item.user === userName);
-        if (player != undefined) {
-          const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x); // POR ALGUM MOTIVO ESSE ANGULO NAO MUDA, PRINTAR O PLAYER E O MOUSECURSOR E INVESTIGAR
-          console.log(angle)
-          console.log(player)
-          if (Math.abs(angle - lastAngle) > 0.5) {
-            setLastAngle(angle)
-            socket.emit('update_angle', { user: userName, angle: angle });
-          }
-        }
-        else {
-          console.log('player undefined on handle key')
-        }
         socket.emit('move', { user: userName, direction: keyCode });
       }
     };
