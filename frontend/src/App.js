@@ -42,7 +42,7 @@ function App({ userName }) {
   const [users, setUsers] = useState([]);
   const [shadows, setShadows] = useState([]);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const [rotation, setRotation] = useState(0);
+  const [mouseCursor, setMouseCursor] = useState({ x: 0, y: 0 });
   const canvasRef = useRef(null);
 
   const drawCanvas = (context) => {
@@ -63,14 +63,15 @@ function App({ userName }) {
   };
 
   const drawSelf = (context, users) => {
-    console.log("drawing self")
-    console.log(users)
-    console.log(userName)
     const player = users.find(item => item.user === userName);
-    console.log(player)
+    if (player === undefined) {
+      console.log("PLAYER UNDEFINED");
+      return;
+    }
+    const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
     context.save();
-    context.translate(200, 200);
-    context.rotate(rotation + Math.PI / 2);
+    context.translate(player.x, player.y);
+    context.rotate(angle + Math.PI / 2);
     context.drawImage(userImage, -10, -10, 20, 20);
     context.restore();
   };
@@ -99,11 +100,7 @@ function App({ userName }) {
   // update angle when mouse move
   useEffect(() => {
     const handleMouseMove = (event) => {
-      const { clientX, clientY } = event;
-      const centerX = CANVAS_WIDTH / 2;
-      const centerY = CANVAS_HEIGHT / 2;
-      const angle = Math.atan2(clientY - centerY, clientX - centerX);
-      setRotation(angle);
+      setMouseCursor({ x: event.clientX, y: event.clientY });
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
@@ -129,7 +126,7 @@ function App({ userName }) {
     };
   }, [socket]);
 
-  // mouse
+  // keyboard
   useEffect(() => {
     if (!socket) return;
 
@@ -200,7 +197,7 @@ function App({ userName }) {
     const context = canvas.getContext('2d');
     drawSelf(context, users);
     return () => {};
-  }, [rotation]);
+  }, [mouseCursor]);
 
   // load images
   useEffect(() => {
