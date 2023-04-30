@@ -52,12 +52,12 @@ function App({ userName }) {
 
   const drawPlayers = (context, users) => {
     for (let i = 0; i < users.length; i++) {
-      context.beginPath();
-      context.arc(users[i].x, users[i].y, CIRCLE_RADIUS, 0, 2 * Math.PI, false);
-      context.fillStyle = '#FF4136';
-      context.fill();
-      context.fillStyle = '#000';
-      context.font = 'bold 20px sans-serif';
+      const angle = Math.atan2(mouseCursor.y - users[i].y, mouseCursor.x - users[i].x);
+      context.save();
+      context.translate(users[i].x, users[i].y);
+      context.rotate(angle + Math.PI / 2);
+      context.drawImage(userImage, -15, -15, 30, 30);
+      context.restore();
       context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
     }
   };
@@ -72,8 +72,9 @@ function App({ userName }) {
     context.save();
     context.translate(player.x, player.y);
     context.rotate(angle + Math.PI / 2);
-    context.drawImage(userImage, -10, -10, 20, 20);
+    context.drawImage(userImage, -15, -15, 30, 30);
     context.restore();
+    context.fillText(player.user, player.x - 20, player.y + 5);
   };
 
   const drawShadows = (context) => {
