@@ -77,6 +77,7 @@ def get_shadow_polygon(user, wall):
     return shadow_polygon
 
 def get_shadows(user):
+    # TODO create only 2 shadows forming an X
 
     walls = [
         [[80, 80], [80, 290]],

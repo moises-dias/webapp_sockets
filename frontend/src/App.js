@@ -73,6 +73,7 @@ function App({ userName }) {
   };
 
   const drawShadows = (context) => {
+    // TODO draw shadows on fixed places (walls)
     shadows.forEach(shadow => {
       context.beginPath();
       shadow.forEach(point => {
@@ -134,8 +135,9 @@ function App({ userName }) {
       }
     };
     
-    // TODO pressing ASD then releasing ASD will trigger new key pressing
-    // when releasing A and S
+    // TODO pressing A,S,D then releasing A,S,D will trigger new key pressing
+    // of D when releasing A and S
+    // POSSIBLE SOLUTION: store a list with pressed keys?
     const handleKeyRelease = (event) => {
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
         console.log("STOP MOVING " + event.keyCode)
@@ -194,6 +196,7 @@ function App({ userName }) {
     }
     const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
     if (Math.abs(angle - lastAngle) > 0.5) {
+      // TODO set a minimum interval between these messages?
       setLastAngle(angle)
       socket.emit('update_angle', { user: userName, angle: angle });
     }
