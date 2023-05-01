@@ -77,17 +77,23 @@ def get_shadow_polygon(user, wall):
     return shadow_polygon
 
 def get_shadows(user):
-    # TODO create only 2 shadows forming an X
+    # TODO create condition to check if there
+    # is a need for the 2 walls on the X, or 
+    # only one is necessary (check if the user is)
+    # on the back of the edges
+    #  x  
+    #      _____
+    #     |    /|
+    #     |  /  |
+    #     |/____|
+    # in this case only the diagonal being show is 
+    # necessary
 
     walls = [
-        [[80, 80], [80, 290]],
-        [[80, 290], [130, 290]],
-        [[130, 290], [130, 80]],
-        [[130, 80], [80, 80]],
-        [[250, 150], [330, 150]],
-        [[330, 150], [330, 180]],
-        [[330, 180], [250, 180]],
-        [[250, 180], [250, 150]]
+        [[80, 80], [130, 290]],
+        [[130, 80], [80, 290]],
+        [[250, 150], [330, 180]],
+        [[330, 150], [250, 180]]
     ]
 
     add_distance_to_user(user, walls)
