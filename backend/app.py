@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, current_app
 from flask_socketio import SocketIO, emit
 # from shadow import get_shadow_point_list
 from shadow_v2 import get_shadows
@@ -11,9 +11,42 @@ def print_red(text):
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
+# socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 users = []
+movements = {}
+thread = None
+
+def background_thread(app=None):
+    # TODO remove user id from message to frontend
+    # TODO remove other users shadow from message to frontend
+    global movements
+    global users
+    with app.test_request_context('/'):
+        while True:
+            if movements:
+                for sid, keys in movements.items():
+                    usr = next((u for u in users if u['id'] == sid), None)
+                    if usr is None:
+                        continue
+                    for key in keys:
+                        usr['y'] -= 10 if key == 87 else 0 # w
+                        usr['y'] += 10 if key == 83 else 0 # s
+                        usr['x'] -= 10 if key == 65 else 0 # a
+                        usr['x'] += 10 if key == 68 else 0 # d
+
+                        usr['shadow'] = get_shadows((usr['x'], usr['y']))
+                        socketio.emit('update_shadow', usr['shadow'], room=sid)
+                # TODO check if the user moved before calling update shadow and sending a message to frontend
+                # TODO check which users are visible and stop sending every user to everybody
+                socketio.emit('update_users', users)
+                print_red("emited")
+                socketio.sleep(0.05)
+            else:
+                print("empty")
+                socketio.sleep(0.05)
+
 
 @socketio.on('connect')
 def handle_connect():
@@ -43,35 +76,35 @@ def handle_update_angle(data):
             usr['angle'] = data['angle']
             emit('update_users', users, broadcast=True)
 
-@socketio.on('move')
-def handle_move(data):
-    # TODO frontend should just pass "moving up" once
-    # and backend should notify everybody, this way there
-    # is no need to a socket message for every 10 pixels
-    # the user will move until backend get movement stop
-    # but how to get colision using this logic?
-    # TODO hide user id from frontend
-    # TODO hide user shadow from frontend
-    print_green(data['direction'])
-    print_green(request.sid)
-    # TODO improve this logic
-    for usr in users:
-        if usr['id'] == request.sid:
-            if data['direction'] == 87: # w
-                usr['y'] -= 10
-            elif data['direction'] == 83: # s
-                usr['y'] += 10
-            elif data['direction'] == 65: # a
-                usr['x'] -= 10
-            elif data['direction'] == 68: # d
-                usr['x'] += 10
-            usr['shadow'] = get_shadows((usr['x'], usr['y']))
-            print_green(f"CASTED {len(usr['shadow'])} SHADOWS.")
-            
-            
-            emit('update_users', users, broadcast=True)
-            emit('update_shadow', usr['shadow'], room=request.sid)
+@socketio.on('start_moving')
+def handle_start_moving(data):
+    global movements
+    global thread
 
+    if not request.sid in movements:
+        movements[request.sid] = [data['direction']]
+    elif data['direction'] not in movements[request.sid]:
+        movements[request.sid].append(data['direction'])
+        
+    if not thread:
+        _app = current_app._get_current_object()
+        thread = socketio.start_background_task(target=background_thread, app=_app)
+    print_green("START MOVE")
+    print_green(movements)
+
+@socketio.on('stop_movement')
+def handle_stop_movement(data):
+    global movements
+
+    if request.sid in movements:
+        if data['direction'] in movements[request.sid]:
+            movements[request.sid].remove(data['direction'])
+            if not movements[request.sid]:
+                del movements[request.sid]
+
+        
+    print_red("FINISHED MOVE")
+    print_red(movements)
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', debug=True)

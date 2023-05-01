@@ -58,7 +58,7 @@ def find_point_from_line(a, b, distance):
 
     ab_length = math.sqrt(ab_vector[0] ** 2 + ab_vector[1] ** 2)
 
-    ab_vector_normalized = [ab_vector[0] / ab_length, ab_vector[1] / ab_length]
+    ab_vector_normalized = [ab_vector[0] / ab_length, ab_vector[1] / ab_length] # TODO handle ZeroDivisionError
 
     c = [round(b[0] + ab_vector_normalized[0] * distance), round(b[1] + ab_vector_normalized[1] * distance)]
 

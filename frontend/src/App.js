@@ -126,38 +126,20 @@ function App({ userName }) {
   useEffect(() => {
     if (!socket) return;
 
-    let intervalId;
-    let activeKeys = [];
-
-    const handleKeyDown = (keyCode) => {
-      if (MOVEMENT_KEYS.includes(keyCode)) {
-        socket.emit('move', { user: userName, direction: keyCode });
-      }
-    };
-
     const handleKeyPress = (event) => {
       if (event.repeat) return;
-      const index = activeKeys.indexOf(event.keyCode);
-      if (index > -1) {
-        return;
+      if (MOVEMENT_KEYS.includes(event.keyCode)) {
+        console.log("SENT MOVE ORDER " + event.keyCode)
+        socket.emit('start_moving', { user: userName, direction: event.keyCode });
       }
-      activeKeys.push(event.keyCode);
-      if (intervalId) {
-        return;
-      }
-      intervalId = setInterval(() => {
-        activeKeys.forEach(keyCode => handleKeyDown(keyCode));
-      }, 50);
     };
-
+    
+    // TODO pressing ASD then releasing ASD will trigger new key pressing
+    // when releasing A and S
     const handleKeyRelease = (event) => {
-      const index = activeKeys.indexOf(event.keyCode);
-      if (index > -1) {
-        activeKeys.splice(index, 1);
-      }
-      if (activeKeys.length === 0) {
-        clearInterval(intervalId);
-        intervalId = null;
+      if (MOVEMENT_KEYS.includes(event.keyCode)) {
+        console.log("STOP MOVING " + event.keyCode)
+        socket.emit('stop_movement', { user: userName, direction: event.keyCode });
       }
     };
 
