@@ -111,6 +111,12 @@ function App({ userName }) {
 
     socket.on('update_users', users => {
       setUsers(users);
+      console.log("update_users")
+    });
+
+    socket.on('test_room', users => {
+      // setUsers(users);
+      console.log("test_room")
     });
 
     socket.on('update_shadow', shadows => {

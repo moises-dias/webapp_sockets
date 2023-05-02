@@ -1,7 +1,9 @@
 from flask import Flask, request, current_app
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
+import flask_socketio
 # from shadow import get_shadow_point_list
 from shadow_v2 import get_shadows
+from visibility import is_usr_visible
 
 def print_green(text):
     print(f'\033[1;32m{text}\033[0m')
@@ -35,24 +37,44 @@ def background_thread(app=None):
                         usr['y'] += 10 if key == 83 else 0 # s
                         usr['x'] -= 10 if key == 65 else 0 # a
                         usr['x'] += 10 if key == 68 else 0 # d
-
-                        usr['shadow'] = get_shadows((usr['x'], usr['y']))
-                        socketio.emit('update_shadow', usr['shadow'], room=sid)
-                # TODO check if the user moved before calling update shadow and sending a message to frontend
-                # TODO check which users are visible and stop sending every user to everybody
+                    
+                    usr['shadow'] = get_shadows((usr['x'], usr['y']))
+                    # TODO check if the user moved before calling update shadow and sending a message to frontend
+                    socketio.emit('update_shadow', usr['shadow'], room=sid)
+                    # TODO check which users are visible and stop sending every user to everybody
+                    users_to_update_usr = []
+                    users_to_remove_usr = []
+                    for stopped_user in users:
+                        if stopped_user == usr:
+                            # update visibility, who can it see now?
+                            continue
+                        if is_usr_visible(stopped_user, usr):
+                            print_green(f"{usr['user']} pode ser visto")
+                            users_to_update_usr.append(stopped_user['user']) # ou sid?
+                            if usr['user'] not in stopped_user['visible_users']:
+                                stopped_user['visible_users'].append(usr['user'])
+                        else:
+                            print_red(f"{usr['user']} nao pode ser visto")
+                            if usr['user'] in stopped_user['visible_users']:
+                                stopped_user['visible_users'].remove(usr['user'])
+                        # if usr in stopped_user['visible_users']
+                        # stopped_user['visible_users'] = set_visibility(usr,)
+                print(users)
                 socketio.emit('update_users', users)
-                print_red("emited")
-                socketio.sleep(0.05)
+                # join_room("test", sid, "/")
+                # leave_room("test", sid, "/")
+                socketio.sleep(0.5)
             else:
                 print("empty")
-                socketio.sleep(0.05)
+                socketio.sleep(0.5)
 
 
 @socketio.on('connect')
 def handle_connect():
     global users
     name = request.args.get('name')
-    new_user = {'id': request.sid, 'user': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0}
+    # TODO change 'user' key to 'name'
+    new_user = {'id': request.sid, 'user': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'visible_users': []}
     users.append(new_user)
     emit('update_users', users, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
@@ -75,6 +97,7 @@ def handle_update_angle(data):
         if usr['id'] == request.sid:
             usr['angle'] = data['angle']
             emit('update_users', users, broadcast=True)
+    # emit('test_room', [], room="test")
 
 @socketio.on('start_moving')
 def handle_start_moving(data):
@@ -89,8 +112,6 @@ def handle_start_moving(data):
     if not thread:
         _app = current_app._get_current_object()
         thread = socketio.start_background_task(target=background_thread, app=_app)
-    print_green("START MOVE")
-    print_green(movements)
 
 @socketio.on('stop_movement')
 def handle_stop_movement(data):
@@ -102,9 +123,6 @@ def handle_stop_movement(data):
             if not movements[request.sid]:
                 del movements[request.sid]
 
-        
-    print_red("FINISHED MOVE")
-    print_red(movements)
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', debug=True)
