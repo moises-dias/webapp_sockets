@@ -28,8 +28,8 @@ def remove_hidden_walls(shadows, walls):
     walls_to_remove = []
     for shadow in shadows:
         for wall in walls:
-            first_triangle = shadow[1:]
-            second_triangle = shadow[:-1]
+            first_triangle = shadow[:-1]
+            second_triangle = [shadow[0], shadow[2], shadow[3]]
             
             first_wall_point_in_first_triangle = is_point_in_triangle(wall[0], first_triangle)
             first_wall_point_in_second_triangle = is_point_in_triangle(wall[0], second_triangle)
@@ -92,8 +92,8 @@ def get_shadows(user):
     walls = [
         [[80, 80], [130, 290]],
         [[130, 80], [80, 290]],
-        [[250, 150], [330, 180]],
-        [[330, 150], [250, 180]]
+        # [[250, 150], [330, 180]],
+        # [[330, 150], [250, 180]]
     ]
 
     add_distance_to_user(user, walls)
