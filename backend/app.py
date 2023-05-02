@@ -31,6 +31,7 @@ def background_thread(app=None):
                 for sid, keys in movements.items():
                     usr = next((u for u in users if u['id'] == sid), None)
                     if usr is None:
+                        print_red("USER IS NONE")
                         continue
                     for key in keys:
                         usr['y'] -= 10 if key == 87 else 0 # w
@@ -40,26 +41,44 @@ def background_thread(app=None):
                     
                     usr['shadow'] = get_shadows((usr['x'], usr['y']))
                     # TODO check if the user moved before calling update shadow and sending a message to frontend
+                    # TODO DO NOT SEND SHADOW NOW, SEND IT AFTER WITH THE USER NEW POSITION AND USERS IN SIGHT
                     socketio.emit('update_shadow', usr['shadow'], room=sid)
                     # TODO check which users are visible and stop sending every user to everybody
+
+                messages = {}
+                for sid, keys in movements.items(): # calling this again because now everyone is updated
+                    usr = next((u for u in users if u['id'] == sid), None)
+                    if usr is None:
+                        print_red("USER IS NONE")
+                        continue
                     users_to_update_usr = []
                     users_to_remove_usr = []
+                    usr['visible_users'] = [] # remove this???????????????????????????????????????
+                    
+                    messages[sid] = {sid: "self_update"} # as he moved he has to receive its own update, in the future, check if he hasnt ran into a wall and do not update itself
+
                     for stopped_user in users:
+                        # TODO only the stopped_user should see and change its visible users, no one else should
                         if stopped_user == usr:
-                            # update visibility, who can it see now?
                             continue
                         if is_usr_visible(stopped_user, usr):
+                            # messages[stopped_user['id']] = {sid: "self_update"} # TODO APPEND INSTEAD OF CREATE
+                            usr['visible_users'].append(stopped_user['user']) # TODO only the stopped_user should see and change its visible users, no one else should, change this line
+                        if stopped_user['user'] in usr['visible_users']:
                             print_green(f"{usr['user']} pode ser visto")
-                            users_to_update_usr.append(stopped_user['user']) # ou sid?
+                            users_to_update_usr.append(stopped_user['id'])
                             if usr['user'] not in stopped_user['visible_users']:
                                 stopped_user['visible_users'].append(usr['user'])
                         else:
                             print_red(f"{usr['user']} nao pode ser visto")
                             if usr['user'] in stopped_user['visible_users']:
                                 stopped_user['visible_users'].remove(usr['user'])
+                                users_to_remove_usr.append(stopped_user['id'])
                         # if usr in stopped_user['visible_users']
                         # stopped_user['visible_users'] = set_visibility(usr,)
                 print(users)
+                # TODO store on the loop for sid, keys in movements.items()
+                # all the messages that should be sent, concat for the stopped users all the user that it should update
                 socketio.emit('update_users', users)
                 # join_room("test", sid, "/")
                 # leave_room("test", sid, "/")
