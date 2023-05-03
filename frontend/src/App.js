@@ -39,7 +39,6 @@ function InputScreen({ onSubmit }) {
 function App({ userName }) {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
-  const [shadows, setShadows] = useState([]);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [lastAngle, setLastAngle] = useState(0);
   const [mouseCursor, setMouseCursor] = useState({ x: 0, y: 0 });
@@ -62,19 +61,9 @@ function App({ userName }) {
     }
   };
 
-  const drawSelf = (context, player, angle) => {
-
-    context.save();
-    context.translate(player.x, player.y);
-    context.rotate(angle + Math.PI / 2);
-    context.drawImage(userImage, -15, -15, 30, 30);
-    context.restore();
-    context.fillText(player.user, player.x - 20, player.y + 5);
-  };
-
-  const drawShadows = (context) => {
+  const drawShadows = (context, player) => {
     // TODO draw shadows on fixed places (walls)
-    shadows.forEach(shadow => {
+    player.shadow.forEach(shadow => {
       context.beginPath();
       shadow.forEach(point => {
         context.lineTo(point[0], point[1]);
@@ -114,18 +103,8 @@ function App({ userName }) {
       console.log("update_users")
     });
 
-    socket.on('test_room', users => {
-      // setUsers(users);
-      console.log("test_room")
-    });
-
-    socket.on('update_shadow', shadows => {
-      setShadows(shadows);
-    });
-
     return () => {
       socket.off('update_users');
-      socket.off('update_shadow');
     };
   }, [socket]);
 
@@ -175,15 +154,15 @@ function App({ userName }) {
       console.log("PLAYER UNDEFINED");
       return;
     }
+
     const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
     if (Math.abs(angle - lastAngle) > 0.5) {
+      // TODO set a minimum interval between these messages?
       setLastAngle(angle)
       socket.emit('update_angle', { user: userName, angle: angle });
     }
 
-
-    drawSelf(context, player, angle);
-    drawShadows(context);
+    drawShadows(context, player);
     return () => {};
   }, [isImageLoaded, users]);
 
@@ -207,7 +186,6 @@ function App({ userName }) {
       socket.emit('update_angle', { user: userName, angle: angle });
     }
 
-    drawSelf(context, player, angle);
     return () => {};
   }, [mouseCursor]);
 

@@ -57,8 +57,8 @@ def find_point_from_line(a, b, distance):
     ab_vector = [b[0] - a[0], b[1] - a[1]]
 
     ab_length = math.sqrt(ab_vector[0] ** 2 + ab_vector[1] ** 2)
-
-    ab_vector_normalized = [ab_vector[0] / ab_length, ab_vector[1] / ab_length] # TODO handle ZeroDivisionError
+    # TODO handle ZeroDivisionError
+    ab_vector_normalized = [ab_vector[0] / ab_length, ab_vector[1] / ab_length] 
 
     c = [round(b[0] + ab_vector_normalized[0] * distance), round(b[1] + ab_vector_normalized[1] * distance)]
 
@@ -92,8 +92,8 @@ def get_shadows(user):
     walls = [
         [[80, 80], [130, 290]],
         [[130, 80], [80, 290]],
-        # [[250, 150], [330, 180]],
-        # [[330, 150], [250, 180]]
+        [[250, 150], [330, 180]],
+        [[330, 150], [250, 180]]
     ]
 
     add_distance_to_user(user, walls)
@@ -106,4 +106,5 @@ def get_shadows(user):
         shadows.append(get_shadow_polygon(user, wall))
         walls = remove_hidden_walls(shadows, walls)
     
+    print(f"casted {len(shadows)} walls")
     return shadows
