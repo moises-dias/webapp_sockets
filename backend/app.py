@@ -61,8 +61,7 @@ def handle_connect():
     global users
     global thread
     name = request.args.get('name')
-    # TODO change 'user' key to 'name'
-    new_user = {'id': request.sid, 'user': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'visible_users': []}
+    new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'visible_users': []}
     new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
     users.append(new_user)
     emit('update_users', users, broadcast=True)
