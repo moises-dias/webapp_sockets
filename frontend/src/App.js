@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
-import backgroundImage from './background.png';
-import playerImage from './player.png';
+import backgroundImageSource from './background.png';
+import playerImageSource from './player.png';
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 400;
 const CANVAS_BORDER_STYLE = '1px solid black';
 const MOVEMENT_KEYS = [87, 83, 65, 68];
 
-const image = new Image();
-const userImage = new Image();
+const backgroundImage = new Image();
+const playerImage = new Image();
 
 function InputScreen({ onSubmit }) {
   const [inputValue, setInputValue] = useState('');
@@ -46,7 +46,7 @@ function App({ userName }) {
 
   const drawCanvas = (context) => {
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    context.drawImage(image, 0, 0);
+    context.drawImage(backgroundImage, 0, 0);
   };
 
   const drawPlayers = (context, users) => {
@@ -55,8 +55,10 @@ function App({ userName }) {
       context.save();
       context.translate(users[i].x, users[i].y);
       context.rotate(users[i].angle + Math.PI / 2);
-      context.drawImage(userImage, -15, -15, 30, 30);
+      // starting at -15 and width of 30.
+      context.drawImage(playerImage, -15, -15, 30, 30);
       context.restore();
+      // TODO add if entity = player before drawing its name
       context.fillText(users[i].name, users[i].x - 20, users[i].y + 5);
     }
   };
@@ -171,8 +173,8 @@ function App({ userName }) {
     if (!isImageLoaded) {
       return;
     }
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
+    // const canvas = canvasRef.current;
+    // const context = canvas.getContext('2d');
     
     // TODO keep track of player instead of finding it all the time
     // and set a minimum intervall, maybe 100ms, between each
@@ -197,10 +199,10 @@ function App({ userName }) {
   // load images
   useEffect(() => {
     // TODO improve this logic to load images in paralel
-    image.src = backgroundImage;
-    image.onload = () => {
-      userImage.src = playerImage;
-      userImage.onload = () => {
+    backgroundImage.src = backgroundImageSource;
+    backgroundImage.onload = () => {
+      playerImage.src = playerImageSource;
+      playerImage.onload = () => {
         setIsImageLoaded(true);
       };
     };
