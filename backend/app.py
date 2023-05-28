@@ -18,7 +18,7 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 entities = []
-movements = {}
+changes = []
 thread = None
 
 def background_thread(app=None):
@@ -27,19 +27,19 @@ def background_thread(app=None):
     # TODO check if the user moved before calling update shadow and sending a message to frontend
     # TODO DO NOT SEND SHADOW NOW, SEND IT AFTER WITH THE USER NEW POSITION AND USERS IN SIGHT
     # TODO check which users are visible and stop sending every user to everybody
-    global movements
+    global changes
     global entities
     with app.test_request_context('/'):
         while True:
             socketio.sleep(0.03)
             with changes_lock:
-                if movements:
-                    for sid, keys in movements.items():
-                        usr = next((u for u in entities if u['id'] == sid), None)
+                for change in changes:
+                    if change['type'] == 'movement':
+                        usr = next((u for u in entities if u['id'] == change['id']), None)
                         if usr is None:
                             print_red("USER IS NONE")
                             continue
-                        for key in keys:
+                        for key in change['values']:
                             usr['y'] -= 5 if key == 87 else 0 # w
                             usr['y'] += 5 if key == 83 else 0 # s
                             usr['x'] -= 5 if key == 65 else 0 # a
@@ -47,7 +47,11 @@ def background_thread(app=None):
                         
                         usr['shadow'] = get_shadows((usr['x'], usr['y']))
 
+                if changes:
                     socketio.emit('update_entities', entities)
+                    # for sid, keys in movements.items():
+
+                    # socketio.emit('update_entities', entities)
                     # join_room("test", sid, "/")
                     # leave_room("test", sid, "/")
                     # socketio.sleep(0.03)
@@ -63,6 +67,7 @@ def handle_connect():
     name = request.args.get('name')
     new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'user'}
     new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
+    # TODO changes.add new user or something like that
     entities.append(new_user)
     emit('update_entities', entities, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
@@ -92,14 +97,17 @@ def handle_update_angle(data):
 
 @socketio.on('start_moving')
 def handle_start_moving(data):
-    global movements
-    global thread
+    global changes
+    # global thread
 
     with changes_lock:
-        if not request.sid in movements:
-            movements[request.sid] = [data['direction']]
-        elif data['direction'] not in movements[request.sid]:
-            movements[request.sid].append(data['direction'])
+        user_movements = next((d for d in changes if d['type'] == 'movement' and d['id'] == request.sid), None)
+        if user_movements:
+            if not data['direction'] in user_movements['values']:
+                user_movements['values'].append(data['direction'])
+        else:
+            user_movements = {'id': request.sid, 'type': 'movement', 'values': [data['direction']]}
+            changes.append(user_movements)
         
     # if not thread:
     #     _app = current_app._get_current_object()
@@ -110,11 +118,19 @@ def handle_stop_movement(data):
     global movements
 
     with changes_lock:
-        if request.sid in movements:
-            if data['direction'] in movements[request.sid]:
-                movements[request.sid].remove(data['direction'])
-                if not movements[request.sid]:
-                    del movements[request.sid]
+        user_movements = next((d for d in changes if d['type'] == 'movement' and d['id'] == request.sid), None)
+        if user_movements:
+            if data['direction'] in user_movements['values']:
+                user_movements['values'].remove(data['direction'])
+                if not user_movements['values']:
+                    changes.remove(user_movements)
+
+
+        # if request.sid in movements:
+        #     if data['direction'] in movements[request.sid]:
+        #         movements[request.sid].remove(data['direction'])
+        #         if not movements[request.sid]:
+        #             del movements[request.sid]
 
 
 if __name__ == '__main__':
