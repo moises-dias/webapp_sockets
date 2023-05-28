@@ -4,7 +4,7 @@ import flask_socketio
 from shadow_v2 import get_shadows
 
 from threading import Lock
-movements_lock = Lock()
+changes_lock = Lock()
 
 def print_green(text):
     print(f'\033[1;32m{text}\033[0m')
@@ -32,7 +32,7 @@ def background_thread(app=None):
     with app.test_request_context('/'):
         while True:
             socketio.sleep(0.03)
-            with movements_lock:
+            with changes_lock:
                 if movements:
                     for sid, keys in movements.items():
                         usr = next((u for u in users if u['id'] == sid), None)
@@ -96,7 +96,7 @@ def handle_start_moving(data):
     global movements
     global thread
 
-    with movements_lock:
+    with changes_lock:
         if not request.sid in movements:
             movements[request.sid] = [data['direction']]
         elif data['direction'] not in movements[request.sid]:
@@ -110,7 +110,7 @@ def handle_start_moving(data):
 def handle_stop_movement(data):
     global movements
 
-    with movements_lock:
+    with changes_lock:
         if request.sid in movements:
             if data['direction'] in movements[request.sid]:
                 movements[request.sid].remove(data['direction'])
