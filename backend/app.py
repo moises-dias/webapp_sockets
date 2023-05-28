@@ -1,6 +1,5 @@
 from flask import Flask, request, current_app
-from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
-import flask_socketio
+from flask_socketio import SocketIO, emit
 from shadow_v2 import get_shadows
 
 from threading import Lock
@@ -14,7 +13,6 @@ def print_red(text):
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-# socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 entities = []
@@ -22,11 +20,6 @@ changes = []
 thread = None
 
 def background_thread(app=None):
-    # TODO remove user id from message to frontend
-    # TODO remove other users shadow from message to frontend
-    # TODO check if the user moved before calling update shadow and sending a message to frontend
-    # TODO DO NOT SEND SHADOW NOW, SEND IT AFTER WITH THE USER NEW POSITION AND USERS IN SIGHT
-    # TODO check which users are visible and stop sending every user to everybody
     global changes
     global entities
     with app.test_request_context('/'):
@@ -49,15 +42,8 @@ def background_thread(app=None):
 
                 if changes:
                     socketio.emit('update_entities', entities)
-                    # for sid, keys in movements.items():
-
-                    # socketio.emit('update_entities', entities)
-                    # join_room("test", sid, "/")
-                    # leave_room("test", sid, "/")
-                    # socketio.sleep(0.03)
                 else:
                     print("empty")
-                    # socketio.sleep(0.03)
 
 
 @socketio.on('connect')
@@ -71,7 +57,6 @@ def handle_connect():
     entities.append(new_user)
     emit('update_entities', entities, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
-    # emit('update_shadow', new_user['shadow'], room=request.sid)
     if not thread:
         _app = current_app._get_current_object()
         thread = socketio.start_background_task(target=background_thread, app=_app)
@@ -93,12 +78,10 @@ def handle_update_angle(data):
             # TODO do not send message here, just update the angle on the movements dict and
             # let the thread send the message
             emit('update_entities', entities, broadcast=True)
-    # emit('test_room', [], room="test")
 
 @socketio.on('start_moving')
 def handle_start_moving(data):
     global changes
-    # global thread
 
     with changes_lock:
         user_movements = next((d for d in changes if d['type'] == 'movement' and d['id'] == request.sid), None)
@@ -109,10 +92,6 @@ def handle_start_moving(data):
             user_movements = {'id': request.sid, 'type': 'movement', 'values': [data['direction']]}
             changes.append(user_movements)
         
-    # if not thread:
-    #     _app = current_app._get_current_object()
-    #     thread = socketio.start_background_task(target=background_thread, app=_app)
-
 @socketio.on('stop_movement')
 def handle_stop_movement(data):
     global movements
@@ -124,13 +103,6 @@ def handle_stop_movement(data):
                 user_movements['values'].remove(data['direction'])
                 if not user_movements['values']:
                     changes.remove(user_movements)
-
-
-        # if request.sid in movements:
-        #     if data['direction'] in movements[request.sid]:
-        #         movements[request.sid].remove(data['direction'])
-        #         if not movements[request.sid]:
-        #             del movements[request.sid]
 
 
 if __name__ == '__main__':
