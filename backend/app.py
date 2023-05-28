@@ -59,6 +59,7 @@ def background_thread(app=None):
 @socketio.on('connect')
 def handle_connect():
     global users
+    global thread
     name = request.args.get('name')
     # TODO change 'user' key to 'name'
     new_user = {'id': request.sid, 'user': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'visible_users': []}
@@ -67,7 +68,9 @@ def handle_connect():
     emit('update_users', users, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
     # emit('update_shadow', new_user['shadow'], room=request.sid)
-
+    if not thread:
+        _app = current_app._get_current_object()
+        thread = socketio.start_background_task(target=background_thread, app=_app)
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -99,9 +102,9 @@ def handle_start_moving(data):
         elif data['direction'] not in movements[request.sid]:
             movements[request.sid].append(data['direction'])
         
-    if not thread:
-        _app = current_app._get_current_object()
-        thread = socketio.start_background_task(target=background_thread, app=_app)
+    # if not thread:
+    #     _app = current_app._get_current_object()
+    #     thread = socketio.start_background_task(target=background_thread, app=_app)
 
 @socketio.on('stop_movement')
 def handle_stop_movement(data):
