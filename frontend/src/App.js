@@ -173,7 +173,12 @@ function App({ userName }) {
     }
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
-
+    
+    // TODO keep track of player instead of finding it all the time
+    // and set a minimum intervall, maybe 100ms, between each
+    // call of this function
+    // maybe set a lastMouseCursor (x, y) and call the function only if
+    // current - last mouse cursor in x and y is greater than a threshold
     const player = users.find(item => item.name === userName);
     if (player === undefined) {
       console.log("PLAYER UNDEFINED");
