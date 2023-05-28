@@ -3,6 +3,9 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
 import flask_socketio
 from shadow_v2 import get_shadows
 
+from threading import Lock
+movements_lock = Lock()
+
 def print_green(text):
     print(f'\033[1;32m{text}\033[0m')
 
@@ -28,27 +31,29 @@ def background_thread(app=None):
     global users
     with app.test_request_context('/'):
         while True:
-            if movements:
-                for sid, keys in movements.items():
-                    usr = next((u for u in users if u['id'] == sid), None)
-                    if usr is None:
-                        print_red("USER IS NONE")
-                        continue
-                    for key in keys:
-                        usr['y'] -= 5 if key == 87 else 0 # w
-                        usr['y'] += 5 if key == 83 else 0 # s
-                        usr['x'] -= 5 if key == 65 else 0 # a
-                        usr['x'] += 5 if key == 68 else 0 # d
-                    
-                    usr['shadow'] = get_shadows((usr['x'], usr['y']))
+            socketio.sleep(0.03)
+            with movements_lock:
+                if movements:
+                    for sid, keys in movements.items():
+                        usr = next((u for u in users if u['id'] == sid), None)
+                        if usr is None:
+                            print_red("USER IS NONE")
+                            continue
+                        for key in keys:
+                            usr['y'] -= 5 if key == 87 else 0 # w
+                            usr['y'] += 5 if key == 83 else 0 # s
+                            usr['x'] -= 5 if key == 65 else 0 # a
+                            usr['x'] += 5 if key == 68 else 0 # d
+                        
+                        usr['shadow'] = get_shadows((usr['x'], usr['y']))
 
-                socketio.emit('update_users', users)
-                # join_room("test", sid, "/")
-                # leave_room("test", sid, "/")
-                socketio.sleep(0.03)
-            else:
-                print("empty")
-                socketio.sleep(0.03)
+                    socketio.emit('update_users', users)
+                    # join_room("test", sid, "/")
+                    # leave_room("test", sid, "/")
+                    # socketio.sleep(0.03)
+                else:
+                    print("empty")
+                    # socketio.sleep(0.03)
 
 
 @socketio.on('connect')
@@ -78,6 +83,8 @@ def handle_update_angle(data):
     for usr in users:
         if usr['id'] == request.sid:
             usr['angle'] = data['angle']
+            # TODO do not send message here, just update the angle on the movements dict and
+            # let the thread send the message
             emit('update_users', users, broadcast=True)
     # emit('test_room', [], room="test")
 
@@ -86,10 +93,11 @@ def handle_start_moving(data):
     global movements
     global thread
 
-    if not request.sid in movements:
-        movements[request.sid] = [data['direction']]
-    elif data['direction'] not in movements[request.sid]:
-        movements[request.sid].append(data['direction'])
+    with movements_lock:
+        if not request.sid in movements:
+            movements[request.sid] = [data['direction']]
+        elif data['direction'] not in movements[request.sid]:
+            movements[request.sid].append(data['direction'])
         
     if not thread:
         _app = current_app._get_current_object()
@@ -99,11 +107,12 @@ def handle_start_moving(data):
 def handle_stop_movement(data):
     global movements
 
-    if request.sid in movements:
-        if data['direction'] in movements[request.sid]:
-            movements[request.sid].remove(data['direction'])
-            if not movements[request.sid]:
-                del movements[request.sid]
+    with movements_lock:
+        if request.sid in movements:
+            if data['direction'] in movements[request.sid]:
+                movements[request.sid].remove(data['direction'])
+                if not movements[request.sid]:
+                    del movements[request.sid]
 
 
 if __name__ == '__main__':
