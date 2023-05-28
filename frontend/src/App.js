@@ -57,7 +57,7 @@ function App({ userName }) {
       context.rotate(users[i].angle + Math.PI / 2);
       context.drawImage(userImage, -15, -15, 30, 30);
       context.restore();
-      context.fillText(users[i].user, users[i].x - 20, users[i].y + 5);
+      context.fillText(users[i].name, users[i].x - 20, users[i].y + 5);
     }
   };
 
@@ -149,7 +149,7 @@ function App({ userName }) {
     drawCanvas(context);
     drawPlayers(context, users);
 
-    const player = users.find(item => item.user === userName);
+    const player = users.find(item => item.name === userName);
     if (player === undefined) {
       console.log("PLAYER UNDEFINED");
       return;
@@ -174,7 +174,7 @@ function App({ userName }) {
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
-    const player = users.find(item => item.user === userName);
+    const player = users.find(item => item.name === userName);
     if (player === undefined) {
       console.log("PLAYER UNDEFINED");
       return;
