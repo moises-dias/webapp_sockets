@@ -102,13 +102,13 @@ function App({ userName }) {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('update_users', users => {
+    socket.on('update_entities', users => {
       setUsers(users);
-      console.log("update_users")
+      console.log("update_entities")
     });
 
     return () => {
-      socket.off('update_users');
+      socket.off('update_entities');
     };
   }, [socket]);
 

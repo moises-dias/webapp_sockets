@@ -17,7 +17,7 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-users = []
+entities = []
 movements = {}
 thread = None
 
@@ -28,14 +28,14 @@ def background_thread(app=None):
     # TODO DO NOT SEND SHADOW NOW, SEND IT AFTER WITH THE USER NEW POSITION AND USERS IN SIGHT
     # TODO check which users are visible and stop sending every user to everybody
     global movements
-    global users
+    global entities
     with app.test_request_context('/'):
         while True:
             socketio.sleep(0.03)
             with changes_lock:
                 if movements:
                     for sid, keys in movements.items():
-                        usr = next((u for u in users if u['id'] == sid), None)
+                        usr = next((u for u in entities if u['id'] == sid), None)
                         if usr is None:
                             print_red("USER IS NONE")
                             continue
@@ -47,7 +47,7 @@ def background_thread(app=None):
                         
                         usr['shadow'] = get_shadows((usr['x'], usr['y']))
 
-                    socketio.emit('update_users', users)
+                    socketio.emit('update_entities', entities)
                     # join_room("test", sid, "/")
                     # leave_room("test", sid, "/")
                     # socketio.sleep(0.03)
@@ -58,13 +58,13 @@ def background_thread(app=None):
 
 @socketio.on('connect')
 def handle_connect():
-    global users
+    global entities
     global thread
     name = request.args.get('name')
     new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'user'}
     new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
-    users.append(new_user)
-    emit('update_users', users, broadcast=True)
+    entities.append(new_user)
+    emit('update_entities', entities, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
     # emit('update_shadow', new_user['shadow'], room=request.sid)
     if not thread:
@@ -73,21 +73,21 @@ def handle_connect():
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    global users
+    global entities
     # TODO improve this logic
-    users = [usr for usr in users if usr['id'] != request.sid]
-    emit('update_users', users, broadcast=True)
+    entities = [usr for usr in entities if usr['id'] != request.sid]
+    emit('update_entities', entities, broadcast=True)
     print_green(f"{request.sid} disconnected")
 
 
 @socketio.on('update_angle')
 def handle_update_angle(data):
-    for usr in users:
+    for usr in entities:
         if usr['id'] == request.sid:
             usr['angle'] = data['angle']
             # TODO do not send message here, just update the angle on the movements dict and
             # let the thread send the message
-            emit('update_users', users, broadcast=True)
+            emit('update_entities', entities, broadcast=True)
     # emit('test_room', [], room="test")
 
 @socketio.on('start_moving')
