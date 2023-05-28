@@ -56,6 +56,8 @@ function App({ userName }) {
       context.translate(users[i].x, users[i].y);
       context.rotate(users[i].angle + Math.PI / 2);
       // starting at -15 and width of 30.
+      // add if type == player or type == bullet
+      // to change the image and size
       context.drawImage(playerImage, -15, -15, 30, 30);
       context.restore();
       // TODO add if entity = player before drawing its name
