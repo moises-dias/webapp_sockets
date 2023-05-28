@@ -116,7 +116,7 @@ function App({ userName }) {
       if (event.repeat) return;
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
         console.log("SENT MOVE ORDER " + event.keyCode)
-        socket.emit('start_moving', { user: userName, direction: event.keyCode });
+        socket.emit('start_moving', { direction: event.keyCode });
       }
     };
     
@@ -126,7 +126,7 @@ function App({ userName }) {
     const handleKeyRelease = (event) => {
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
         console.log("STOP MOVING " + event.keyCode)
-        socket.emit('stop_movement', { user: userName, direction: event.keyCode });
+        socket.emit('stop_movement', { direction: event.keyCode });
       }
     };
 
@@ -159,7 +159,7 @@ function App({ userName }) {
     if (Math.abs(angle - lastAngle) > 0.5) {
       // TODO set a minimum interval between these messages?
       setLastAngle(angle)
-      socket.emit('update_angle', { user: userName, angle: angle });
+      socket.emit('update_angle', { angle: angle });
     }
 
     drawShadows(context, player);
@@ -183,7 +183,7 @@ function App({ userName }) {
     if (Math.abs(angle - lastAngle) > 0.5) {
       // TODO set a minimum interval between these messages?
       setLastAngle(angle)
-      socket.emit('update_angle', { user: userName, angle: angle });
+      socket.emit('update_angle', { angle: angle });
     }
 
     return () => {};
