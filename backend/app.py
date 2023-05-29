@@ -20,11 +20,19 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 entities = []
 changes = []
 thread = None
+walls = [
+    [[80, 80], [130, 290]],
+    [[130, 80], [80, 290]],
+    [[250, 150], [330, 180]],
+    [[330, 150], [250, 180]]
+]
 
 def background_thread(app=None):
     global changes
     global entities
+    global walls
     changes_to_remove = []
+    bullets_to_remove = []
     bullets_to_update = False
     with app.test_request_context('/'):
         while True:
@@ -52,6 +60,24 @@ def background_thread(app=None):
                         bullets_to_update = True
                         entity['x'] += entity['ite_x']
                         entity['y'] += entity['ite_y']
+                        # TODO check if bullet hit players
+                        # if bullet hit player the player must stay 5 second stopped and respawn at a random position
+                        # backend send the name of who killed the player
+                        if not (0 <= entity['x'] <= 400 and 0 <= entity['y'] <= 400):
+                            bullets_to_remove.append(entity)
+                        else:
+                            for wall in walls:
+                                x1, y1 = wall[0]
+                                x2, y2 = wall[1]
+
+                                if x1 <= entity['x'] <= x2 and y1 <= entity['y'] <= y2:
+                                    bullets_to_remove.append(entity)
+
+
+                if bullets_to_remove:
+                    for bullet in bullets_to_remove:
+                        entities.remove(bullet)
+                    bullets_to_remove = []
 
                 if changes or bullets_to_update:
                     socketio.emit('update_entities', entities)
