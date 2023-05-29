@@ -62,7 +62,7 @@ def handle_connect():
     global thread
 
     name = request.args.get('name')
-    new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'user'}
+    new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'player'}
     new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
     with changes_lock:
         entities.append(new_user)

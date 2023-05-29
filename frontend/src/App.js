@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import backgroundImageSource from './background.png';
 import playerImageSource from './player.png';
+import bulletImageSource from './bullet.png';
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 400;
@@ -10,6 +11,7 @@ const MOVEMENT_KEYS = [87, 83, 65, 68];
 
 const backgroundImage = new Image();
 const playerImage = new Image();
+const bulletImage = new Image();
 
 function InputScreen({ onSubmit }) {
   const [inputValue, setInputValue] = useState('');
@@ -58,7 +60,13 @@ function App({ userName }) {
       // starting at -15 and width of 30.
       // add if type == player or type == bullet
       // to change the image and size
-      context.drawImage(playerImage, -15, -15, 30, 30);
+      if (users[i].type === 'player') {
+        context.drawImage(playerImage, -15, -15, 30, 30);
+      }
+      else if (users[i].type === 'bullet') {
+        context.drawImage(bulletImage, -5, -5, 10, 10);
+      }
+
       context.restore();
       // TODO add if entity = player before drawing its name
       context.fillText(users[i].name, users[i].x - 20, users[i].y + 5);
@@ -205,7 +213,10 @@ function App({ userName }) {
     backgroundImage.onload = () => {
       playerImage.src = playerImageSource;
       playerImage.onload = () => {
-        setIsImageLoaded(true);
+        bulletImage.src = bulletImageSource;
+        bulletImage.onload = () => {
+          setIsImageLoaded(true);
+        }
       };
     };
   }, []);
