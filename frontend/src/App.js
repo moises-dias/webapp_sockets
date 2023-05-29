@@ -64,12 +64,14 @@ function App({ userName }) {
         context.drawImage(playerImage, -15, -15, 30, 30);
       }
       else if (users[i].type === 'bullet') {
-        context.drawImage(bulletImage, -5, -5, 10, 10);
+        context.drawImage(bulletImage, -10, -10, 20, 20);
       }
 
       context.restore();
       // TODO add if entity = player before drawing its name
-      context.fillText(users[i].name, users[i].x - 20, users[i].y + 5);
+      if (users[i].type === 'player') {
+        context.fillText(users[i].name, users[i].x - 20, users[i].y + 5);
+      }
     }
   };
 
@@ -105,6 +107,34 @@ function App({ userName }) {
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
+
+  // handle mouse click
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleClick = (event) => {
+      if (event.button === 0) {
+
+        console.log(users)
+        const player = users.find(item => item.name === userName);
+        if (player === undefined) {
+          console.log("PLAYER UNDEFINED");
+          return;
+        }
+        console.log(player)
+        const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
+        console.log(player.x)
+        console.log(player.y)
+        socket.emit('left_click', { x: player.x, y: player.y, angle: angle });
+      }
+    };
+
+    window.addEventListener('click', handleClick);
+
+    return () => {
+      window.removeEventListener('click', handleClick);
+    };
+  }, [socket, users, mouseCursor]);
 
   // handle backend socket messages
   useEffect(() => {

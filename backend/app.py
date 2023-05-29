@@ -2,6 +2,8 @@ from flask import Flask, request, current_app
 from flask_socketio import SocketIO
 from shadow_v2 import get_shadows
 
+import math
+
 from threading import Lock
 changes_lock = Lock()
 
@@ -23,6 +25,7 @@ def background_thread(app=None):
     global changes
     global entities
     changes_to_remove = []
+    bullets_to_update = False
     with app.test_request_context('/'):
         while True:
             socketio.sleep(0.03)
@@ -40,12 +43,19 @@ def background_thread(app=None):
                             usr['x'] += 5 if key == 68 else 0 # d
                         
                         usr['shadow'] = get_shadows((usr['x'], usr['y']))
-                    elif change['type'] in ['update_angle', 'connect', 'disconnect']:
+                    elif change['type'] in ['update_angle', 'connect', 'disconnect', 'left_click']:
                         changes_to_remove.append(change)
                         print_red(change['type'])
 
-                if changes:
+                for entity in entities:
+                    if entity['type'] == 'bullet':
+                        bullets_to_update = True
+                        entity['x'] += entity['ite_x']
+                        entity['y'] += entity['ite_y']
+
+                if changes or bullets_to_update:
                     socketio.emit('update_entities', entities)
+                    bullets_to_update = False
 
                 if changes_to_remove:
                     for change in changes_to_remove:
@@ -94,6 +104,21 @@ def handle_update_angle(data):
             if usr['id'] == request.sid:
                 usr['angle'] = data['angle']
                 changes.append({'type': 'update_angle'})
+
+
+@socketio.on('left_click')
+def handle_left_click(data):
+    global entities
+    global changes
+    print("NEW BULLET")
+    print(data['x'])
+    print(data['angle'])
+    ite_x = math.cos(data['angle'])
+    ite_y = math.sin(data['angle'])
+    new_bullet = {'id': "test", 'x': data['x'], 'y': data['y'], 'angle': data['angle'], 'ite_x': ite_x * 15, 'ite_y': ite_y * 15, 'type': 'bullet'}
+    with changes_lock:
+        entities.append(new_bullet)
+        changes.append({'type': 'left_click'})
 
 @socketio.on('start_moving')
 def handle_start_moving(data):
