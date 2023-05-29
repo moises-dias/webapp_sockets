@@ -93,6 +93,7 @@ function App({ userName }) {
   // connect to socket
   useEffect(() => {
     const newSocket = io('http://localhost:5000', { query: { name: userName} });
+    // const newSocket = io('http://192.168.1.2:5000', { query: { name: userName} });
     setSocket(newSocket);
     return () => newSocket.disconnect();
   }, []);
@@ -129,10 +130,10 @@ function App({ userName }) {
       }
     };
 
-    window.addEventListener('click', handleClick);
+    window.addEventListener('mousedown', handleClick);
 
     return () => {
-      window.removeEventListener('click', handleClick);
+      window.removeEventListener('mousedown', handleClick);
     };
   }, [socket, users, mouseCursor]);
 
