@@ -22,6 +22,7 @@ thread = None
 def background_thread(app=None):
     global changes
     global entities
+    changes_to_remove = []
     with app.test_request_context('/'):
         while True:
             socketio.sleep(0.03)
@@ -39,23 +40,35 @@ def background_thread(app=None):
                             usr['x'] += 5 if key == 68 else 0 # d
                         
                         usr['shadow'] = get_shadows((usr['x'], usr['y']))
+                    elif change['type'] in ['update_angle', 'connect', 'disconnect']:
+                        changes_to_remove.append(change)
+                        print_red(change['type'])
 
                 if changes:
                     socketio.emit('update_entities', entities)
-                else:
-                    print("empty")
+
+                if changes_to_remove:
+                    for change in changes_to_remove:
+                        changes.remove(change)
+                        print_green(f"REMOVED {change['type']}")
+                    changes_to_remove = []
+
 
 
 @socketio.on('connect')
 def handle_connect():
     global entities
+    global changes
     global thread
+
     name = request.args.get('name')
     new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'user'}
     new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
     # TODO changes.add new user or something like that
-    entities.append(new_user)
-    emit('update_entities', entities, broadcast=True)
+    with changes_lock:
+        entities.append(new_user)
+        changes.append({'type': 'connect'})
+    # emit('update_entities', entities, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
     if not thread:
         _app = current_app._get_current_object()
@@ -64,20 +77,26 @@ def handle_connect():
 @socketio.on('disconnect')
 def handle_disconnect():
     global entities
+    global changes
+
     # TODO improve this logic
-    entities = [usr for usr in entities if usr['id'] != request.sid]
-    emit('update_entities', entities, broadcast=True)
+    with changes_lock:
+        entities = [usr for usr in entities if usr['id'] != request.sid]
+        changes.append({'type': 'disconnect'})
+    # emit('update_entities', entities, broadcast=True)
     print_green(f"{request.sid} disconnected")
 
 
 @socketio.on('update_angle')
 def handle_update_angle(data):
-    for usr in entities:
-        if usr['id'] == request.sid:
-            usr['angle'] = data['angle']
-            # TODO do not send message here, just update the angle on the movements dict and
-            # let the thread send the message
-            emit('update_entities', entities, broadcast=True)
+    global entities
+    global changes
+
+    with changes_lock:
+        for usr in entities:
+            if usr['id'] == request.sid:
+                usr['angle'] = data['angle']
+                changes.append({'type': 'update_angle'})
 
 @socketio.on('start_moving')
 def handle_start_moving(data):
@@ -94,7 +113,7 @@ def handle_start_moving(data):
         
 @socketio.on('stop_movement')
 def handle_stop_movement(data):
-    global movements
+    global changes
 
     with changes_lock:
         user_movements = next((d for d in changes if d['type'] == 'movement' and d['id'] == request.sid), None)
