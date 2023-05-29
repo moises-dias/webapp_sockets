@@ -40,6 +40,7 @@ def background_thread(app=None):
             with changes_lock:
                 for change in changes:
                     if change['type'] == 'movement':
+                        # TODO if player was moving and dies, remove all of its movement
                         usr = next((u for u in entities if u['id'] == change['id']), None)
                         if usr is None:
                             print_red("USER IS NONE")
@@ -82,7 +83,7 @@ def background_thread(app=None):
                 for bullet in entities:
                     if bullet['type'] == 'bullet':
                         for player in entities:
-                            if player['type'] == 'player':
+                            if player['type'] == 'player' and player['alive'] == 'yes':
                                 x1, y1 = player["x"] - 15, player["y"] - 15
                                 x2, y2 = player["x"] + 15, player["y"] + 15
 
