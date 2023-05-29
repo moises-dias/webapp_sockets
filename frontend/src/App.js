@@ -156,17 +156,12 @@ function App({ userName }) {
 
     const handleClick = (event) => {
       if (event.button === 0) {
-
-        console.log(users)
         const player = usersRef.current.find(item => item.name === userName);
         if (player === undefined) {
           console.log("PLAYER UNDEFINED");
           return;
         }
-        console.log(player)
         const angle = Math.atan2(mouseCursorRef.current.y - player.y, mouseCursorRef.current.x - player.x);
-        console.log(player.x)
-        console.log(player.y)
         socket.emit('left_click', { x: player.x, y: player.y, angle: angle });
       }
     };
@@ -184,7 +179,6 @@ function App({ userName }) {
 
     socket.on('update_entities', users => {
       setUsers(users);
-      console.log("update_entities")
     });
 
     return () => {
@@ -199,7 +193,6 @@ function App({ userName }) {
     const handleKeyPress = (event) => {
       if (event.repeat) return;
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
-        console.log("SENT MOVE ORDER " + event.keyCode)
         socket.emit('start_moving', { direction: event.keyCode });
       }
     };
@@ -209,7 +202,6 @@ function App({ userName }) {
     // POSSIBLE SOLUTION: store a list with pressed keys?
     const handleKeyRelease = (event) => {
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
-        console.log("STOP MOVING " + event.keyCode)
         socket.emit('stop_movement', { direction: event.keyCode });
       }
     };
@@ -225,9 +217,8 @@ function App({ userName }) {
 
   // draw when users or images are loaded
   useEffect(() => {
-    if (!isImageLoaded) {
-      return;
-    }
+    if (!isImageLoaded) return;
+
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     drawCanvas(context);
@@ -254,12 +245,8 @@ function App({ userName }) {
 
   // draw when user move the MOUSE
   useEffect(() => {
-    if (!isImageLoaded) {
-      return;
-    }
-    // const canvas = canvasRef.current;
-    // const context = canvas.getContext('2d');
-    
+    if (!isImageLoaded) return;
+
     // TODO keep track of player instead of finding it all the time
     // and set a minimum intervall, maybe 100ms, between each
     // call of this function
