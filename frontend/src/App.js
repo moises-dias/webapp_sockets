@@ -3,6 +3,7 @@ import io from 'socket.io-client';
 import backgroundImageSource from './background.png';
 import playerImageSource from './player.png';
 import bulletImageSource from './bullet.png';
+import deadPlayerImageSource from './deadPlayer.png';
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 400;
@@ -12,6 +13,7 @@ const MOVEMENT_KEYS = [87, 83, 65, 68];
 const backgroundImage = new Image();
 const playerImage = new Image();
 const bulletImage = new Image();
+const deadPlayerImage = new Image();
 
 function InputScreen({ onSubmit }) {
   const [inputValue, setInputValue] = useState('');
@@ -62,7 +64,12 @@ function App({ userName }) {
       // add if type == player or type == bullet
       // to change the image and size
       if (users[i].type === 'player') {
-        context.drawImage(playerImage, -15, -15, 30, 30);
+        if (users[i].alive === 'yes') {
+          context.drawImage(playerImage, -15, -15, 30, 30);
+        }
+        else {
+          context.drawImage(deadPlayerImage, -15, -15, 30, 30);
+        }
       }
       else if (users[i].type === 'bullet') {
         context.drawImage(bulletImage, -10, -10, 20, 20);
@@ -272,7 +279,10 @@ function App({ userName }) {
       playerImage.onload = () => {
         bulletImage.src = bulletImageSource;
         bulletImage.onload = () => {
-          setIsImageLoaded(true);
+          deadPlayerImage.src = deadPlayerImageSource;
+          deadPlayerImage.onload = () => {
+            setIsImageLoaded(true);
+          }
         }
       };
     };
