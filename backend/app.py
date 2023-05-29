@@ -44,6 +44,7 @@ def background_thread(app=None):
                         usr = next((u for u in entities if u['id'] == change['id']), None)
                         if usr is None:
                             print_red("USER IS NONE")
+                            # TODO remove the change if there is no user
                             continue
                         for key in change['values']:
                             usr['y'] -= 5 if key == 87 else 0 # w
