@@ -73,10 +73,28 @@ def background_thread(app=None):
                                 if x1 <= entity['x'] <= x2 and y1 <= entity['y'] <= y2:
                                     bullets_to_remove.append(entity)
 
-
                 if bullets_to_remove:
                     for bullet in bullets_to_remove:
                         entities.remove(bullet)
+                    bullets_to_remove = []
+
+                # TODO create two lists, bullets and players, separate the entities list
+                for bullet in entities:
+                    if bullet['type'] == 'bullet':
+                        for player in entities:
+                            if player['type'] == 'player':
+                                x1, y1 = player["x"] - 15, player["y"] - 15
+                                x2, y2 = player["x"] + 15, player["y"] + 15
+
+                                if x1 <= bullet['x'] <= x2 and y1 <= bullet['y'] <= y2:
+                                    print_red("HIT!!!!!!!!!!!!!")
+                                    player['alive'] = 'no'
+                                    bullets_to_remove.append(bullet)
+
+                if bullets_to_remove:
+                    for bullet in bullets_to_remove:
+                        if bullet in entities:
+                            entities.remove(bullet)
                     bullets_to_remove = []
 
                 if changes or bullets_to_update:
@@ -98,7 +116,7 @@ def handle_connect():
     global thread
 
     name = request.args.get('name')
-    new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'player'}
+    new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'player', 'alive': 'yes'}
     new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
     with changes_lock:
         entities.append(new_user)
@@ -141,7 +159,7 @@ def handle_left_click(data):
     print(data['angle'])
     ite_x = math.cos(data['angle'])
     ite_y = math.sin(data['angle'])
-    new_bullet = {'id': "test", 'x': data['x'], 'y': data['y'], 'angle': data['angle'], 'ite_x': ite_x * 15, 'ite_y': ite_y * 15, 'type': 'bullet'}
+    new_bullet = {'id': "test", 'x': data['x'] + ite_x * 15, 'y': data['y'] + ite_y * 15, 'angle': data['angle'], 'ite_x': ite_x * 30, 'ite_y': ite_y * 30, 'type': 'bullet'}
     with changes_lock:
         entities.append(new_bullet)
         changes.append({'type': 'left_click'})

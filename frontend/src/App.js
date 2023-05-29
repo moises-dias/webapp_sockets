@@ -41,6 +41,7 @@ function InputScreen({ onSubmit }) {
 function App({ userName }) {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
+  // TODO block commands if player is dead
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [lastAngle, setLastAngle] = useState(0);
   const [mouseCursor, setMouseCursor] = useState({ x: 0, y: 0 });
@@ -72,6 +73,29 @@ function App({ userName }) {
       if (users[i].type === 'player') {
         context.fillText(users[i].name, users[i].x - 20, users[i].y + 5);
       }
+    }
+  };
+
+  const drawRestartMessage = (context, player) => {
+    if (player.alive != 'yes') {
+      
+      const text1 = 'Killed by ---';
+      const text2 = 'Press ENTER to restart';
+
+      context.font = 'bold 30px sans-serif';
+      context.fillStyle = 'blue';
+
+      const text1Width = context.measureText(text1).width;
+      const text2Width = context.measureText(text2).width;
+      const centerX1 = 200 - (text1Width / 2);
+      const centerX2 = 200 - (text2Width / 2);
+
+      //context.textBaseline = 'middle';
+
+      context.fillText(text1, centerX1, 200);
+      context.fillText(text2, centerX2, 240);
+      context.font = '10px sans-serif';
+      context.fillStyle = '#000000';
     }
   };
 
@@ -206,6 +230,8 @@ function App({ userName }) {
     }
 
     drawShadows(context, player);
+    drawRestartMessage(context, player);
+
     return () => {};
   }, [isImageLoaded, users]);
 
