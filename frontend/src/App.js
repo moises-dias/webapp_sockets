@@ -49,6 +49,16 @@ function App({ userName }) {
   const [mouseCursor, setMouseCursor] = useState({ x: 0, y: 0 });
   const canvasRef = useRef(null);
 
+  const usersRef = useRef(users);
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
+
+  const mouseCursorRef = useRef(mouseCursor);
+  useEffect(() => {
+    mouseCursorRef.current = mouseCursor;
+  }, [mouseCursor]);
+
   const drawCanvas = (context) => {
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     context.drawImage(backgroundImage, 0, 0);
@@ -148,13 +158,13 @@ function App({ userName }) {
       if (event.button === 0) {
 
         console.log(users)
-        const player = users.find(item => item.name === userName);
+        const player = usersRef.current.find(item => item.name === userName);
         if (player === undefined) {
           console.log("PLAYER UNDEFINED");
           return;
         }
         console.log(player)
-        const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
+        const angle = Math.atan2(mouseCursorRef.current.y - player.y, mouseCursorRef.current.x - player.x);
         console.log(player.x)
         console.log(player.y)
         socket.emit('left_click', { x: player.x, y: player.y, angle: angle });
@@ -166,7 +176,7 @@ function App({ userName }) {
     return () => {
       window.removeEventListener('mousedown', handleClick);
     };
-  }, [socket, users, mouseCursor]);
+  }, [socket]);
 
   // handle backend socket messages
   useEffect(() => {
@@ -229,7 +239,7 @@ function App({ userName }) {
       return;
     }
 
-    const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
+    const angle = Math.atan2(mouseCursorRef.current.y - player.y, mouseCursorRef.current.x - player.x);
     if (Math.abs(angle - lastAngle) > 0.5) {
       // TODO set a minimum interval between these messages?
       setLastAngle(angle)
@@ -255,7 +265,7 @@ function App({ userName }) {
     // call of this function
     // maybe set a lastMouseCursor (x, y) and call the function only if
     // current - last mouse cursor in x and y is greater than a threshold
-    const player = users.find(item => item.name === userName);
+    const player = usersRef.current.find(item => item.name === userName);
     if (player === undefined) {
       console.log("PLAYER UNDEFINED");
       return;
