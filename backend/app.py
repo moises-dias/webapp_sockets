@@ -1,5 +1,5 @@
 from flask import Flask, request, current_app
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 from shadow_v2 import get_shadows
 
 from threading import Lock
@@ -64,11 +64,9 @@ def handle_connect():
     name = request.args.get('name')
     new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'user'}
     new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
-    # TODO changes.add new user or something like that
     with changes_lock:
         entities.append(new_user)
         changes.append({'type': 'connect'})
-    # emit('update_entities', entities, broadcast=True)
     print_green(f"A client with id {request.sid} connected with name {name}")
     if not thread:
         _app = current_app._get_current_object()
@@ -83,7 +81,6 @@ def handle_disconnect():
     with changes_lock:
         entities = [usr for usr in entities if usr['id'] != request.sid]
         changes.append({'type': 'disconnect'})
-    # emit('update_entities', entities, broadcast=True)
     print_green(f"{request.sid} disconnected")
 
 
