@@ -3,6 +3,7 @@ from flask_socketio import SocketIO
 from shadow_v2 import get_shadows
 
 import math
+import time
 
 from threading import Lock
 changes_lock = Lock()
@@ -36,8 +37,13 @@ def background_thread(app=None):
     bullets_to_update = False
     with app.test_request_context('/'):
         while True:
+            start_time = time.time()
             socketio.sleep(0.03)
+            end_time = time.time()
+            formatted_time = "{:.2f} ms".format((end_time - start_time) * 1000)
+            print_green(formatted_time)
             with changes_lock:
+                start_time = time.time()
                 for change in changes:
                     if change['type'] == 'movement':
                         # TODO if player was moving and dies, remove all of its movement
@@ -108,6 +114,10 @@ def background_thread(app=None):
                         changes.remove(change)
                         print_green(f"REMOVED {change['type']}")
                     changes_to_remove = []
+                
+                end_time = time.time()
+                formatted_time = "{:.2f} ms".format((end_time - start_time) * 1000)
+                print_red(formatted_time)
 
 
 

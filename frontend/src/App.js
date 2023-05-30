@@ -161,8 +161,10 @@ function App({ userName }) {
           console.log("PLAYER UNDEFINED");
           return;
         }
-        const angle = Math.atan2(mouseCursorRef.current.y - player.y, mouseCursorRef.current.x - player.x);
-        socket.emit('left_click', { x: player.x, y: player.y, angle: angle });
+        if (player.alive === 'yes') {
+          const angle = Math.atan2(mouseCursorRef.current.y - player.y, mouseCursorRef.current.x - player.x);
+          socket.emit('left_click', { x: player.x, y: player.y, angle: angle });
+        }
       }
     };
 
@@ -193,7 +195,14 @@ function App({ userName }) {
     const handleKeyPress = (event) => {
       if (event.repeat) return;
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
-        socket.emit('start_moving', { direction: event.keyCode });
+        const player = usersRef.current.find(item => item.name === userName);
+        if (player === undefined) {
+          console.log("PLAYER UNDEFINED");
+          return;
+        }
+        if (player.alive === 'yes') {
+          socket.emit('start_moving', { direction: event.keyCode });
+        }
       }
     };
     
@@ -202,7 +211,14 @@ function App({ userName }) {
     // POSSIBLE SOLUTION: store a list with pressed keys?
     const handleKeyRelease = (event) => {
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
-        socket.emit('stop_movement', { direction: event.keyCode });
+        const player = usersRef.current.find(item => item.name === userName);
+        if (player === undefined) {
+          console.log("PLAYER UNDEFINED");
+          return;
+        }
+        if (player.alive === 'yes') {
+          socket.emit('stop_movement', { direction: event.keyCode });
+        }
       }
     };
 
@@ -230,11 +246,13 @@ function App({ userName }) {
       return;
     }
 
-    const angle = Math.atan2(mouseCursorRef.current.y - player.y, mouseCursorRef.current.x - player.x);
-    if (Math.abs(angle - lastAngle) > 0.5) {
-      // TODO set a minimum interval between these messages?
-      setLastAngle(angle)
-      socket.emit('update_angle', { angle: angle });
+    if (player.alive === 'yes') {
+      const angle = Math.atan2(mouseCursorRef.current.y - player.y, mouseCursorRef.current.x - player.x);
+      if (Math.abs(angle - lastAngle) > 0.5) {
+        // TODO set a minimum interval between these messages?
+        setLastAngle(angle)
+        socket.emit('update_angle', { angle: angle });
+      }
     }
 
     drawShadows(context, player);
@@ -257,11 +275,13 @@ function App({ userName }) {
       console.log("PLAYER UNDEFINED");
       return;
     }
-    const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
-    if (Math.abs(angle - lastAngle) > 0.5) {
-      // TODO set a minimum interval between these messages?
-      setLastAngle(angle)
-      socket.emit('update_angle', { angle: angle });
+    if (player.alive === 'yes') {
+      const angle = Math.atan2(mouseCursor.y - player.y, mouseCursor.x - player.x);
+      if (Math.abs(angle - lastAngle) > 0.5) {
+        // TODO set a minimum interval between these messages?
+        setLastAngle(angle)
+        socket.emit('update_angle', { angle: angle });
+      }
     }
 
     return () => {};
