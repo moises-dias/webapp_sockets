@@ -52,12 +52,11 @@ def add_distance_to_user(user, walls):
 
 def find_point_from_line(a, b, distance):
     if a == b:
-        a[0] += 1
-        a[1] += 1
+        return [0, 0]
+
     ab_vector = [b[0] - a[0], b[1] - a[1]]
 
     ab_length = math.sqrt(ab_vector[0] ** 2 + ab_vector[1] ** 2)
-    # TODO handle ZeroDivisionError
     ab_vector_normalized = [ab_vector[0] / ab_length, ab_vector[1] / ab_length] 
 
     c = [round(b[0] + ab_vector_normalized[0] * distance), round(b[1] + ab_vector_normalized[1] * distance)]
