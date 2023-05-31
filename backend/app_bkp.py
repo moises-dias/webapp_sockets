@@ -110,7 +110,8 @@ def background_thread(app=None):
                     socket_start_time = time.time()
                     # socketio.emit('update_entities', entities)
                     for entity in entities:
-                        socketio.emit('update_entities', entities, room=entity['id'])
+                        if entity['type'] == 'player':
+                            socketio.emit('update_entities', entities, room=entity['id'])
                     socket_end_time = time.time()
                     execution_times.append(socket_end_time - socket_start_time)
                     formatted_time = "{:.1f} ms".format((sum(execution_times) / len(execution_times)) * 1000)
