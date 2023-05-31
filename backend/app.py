@@ -5,6 +5,8 @@ from shadow_v2 import get_shadows
 import math
 import time
 
+from collections import deque
+
 from threading import Lock
 changes_lock = Lock()
 
@@ -29,6 +31,9 @@ walls = [
 ]
 
 def background_thread(app=None):
+    # TODO remove whatever can be removed of the message to the user
+    execution_times = deque(maxlen=30)
+    execution_times_with_code_logic = deque(maxlen=30)
     global changes
     global entities
     global walls
@@ -37,11 +42,7 @@ def background_thread(app=None):
     bullets_to_update = False
     with app.test_request_context('/'):
         while True:
-            start_time = time.time()
             socketio.sleep(0.03)
-            end_time = time.time()
-            formatted_time = "{:.2f} ms".format((end_time - start_time) * 1000)
-            print_green(formatted_time)
             with changes_lock:
                 start_time = time.time()
                 for change in changes:
@@ -106,7 +107,14 @@ def background_thread(app=None):
                     bullets_to_remove = []
 
                 if changes or bullets_to_update:
-                    socketio.emit('update_entities', entities)
+                    socket_start_time = time.time()
+                    # socketio.emit('update_entities', entities)
+                    for entity in entities:
+                        socketio.emit('update_entities', entities, room=entity['id'])
+                    socket_end_time = time.time()
+                    execution_times.append(socket_end_time - socket_start_time)
+                    formatted_time = "{:.1f} ms".format((sum(execution_times) / len(execution_times)) * 1000)
+                    print_red(f"SEND MESSAGE TIME: {formatted_time}")
                     bullets_to_update = False
 
                 if changes_to_remove:
@@ -116,8 +124,9 @@ def background_thread(app=None):
                     changes_to_remove = []
                 
                 end_time = time.time()
-                formatted_time = "{:.2f} ms".format((end_time - start_time) * 1000)
-                print_red(formatted_time)
+                execution_times_with_code_logic.append(end_time - start_time)
+                formatted_time = "{:.1f} ms".format((end_time - start_time) * 1000)
+                print_red(f"MESSAGE AND LOGIC: {formatted_time}")
 
 
 
