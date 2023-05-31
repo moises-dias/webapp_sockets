@@ -77,24 +77,32 @@ def get_shadow_polygon(user, wall):
     return shadow_polygon
 
 def get_shadows(user):
-    # TODO create condition to check if there
-    # is a need for the 2 walls on the X, or 
-    # only one is necessary (check if the user is)
-    # on the back of the edges
-    #  x  
-    #      _____
-    #     |    /|
-    #     |  /  |
-    #     |/____|
-    # in this case only the diagonal being show is 
-    # necessary
 
-    walls = [
+    walls_to_remove = []
+
+    up_left_walls = [
         [[80, 80], [130, 290]],
-        [[130, 80], [80, 290]],
         [[250, 150], [330, 180]],
+    ]
+
+    up_right_walls = [
+        [[130, 80], [80, 290]],
         [[330, 150], [250, 180]]
     ]
+
+    for wall in up_left_walls:
+        if (user[0] < wall[0][0] and user[1] < wall[0][1]) or (user[0] > wall[1][0] and user[1] > wall[1][1]):
+            walls_to_remove.append(wall)
+    
+    for wall in up_right_walls:
+        if (user[0] > wall[0][0] and user[1] < wall[0][1]) or (user[0] < wall[1][0] and user[1] > wall[1][1]):
+            walls_to_remove.append(wall)
+
+    walls = up_left_walls + up_right_walls
+
+    for wall in walls_to_remove:
+        if wall in walls:
+            walls.remove(wall)
 
     add_distance_to_user(user, walls)
     walls.sort(key=lambda x: x[2])
