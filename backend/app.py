@@ -23,6 +23,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 entities = []
 changes = []
 thread = None
+# TODO create another file just to store the walls for
+# the shadow file and here (to use on the bullets too)
 walls = [
     [[80, 80], [130, 290]],
     [[130, 80], [80, 290]],
@@ -77,6 +79,9 @@ def background_thread(app=None):
                         else:
                             # TODO define when creating the bullet, the wall that it can collide, there is only one
                             # instead of comparing with all the walls
+                            # try to intersect the line of the bullet and the lines of the walls, 
+                            # compare only with the wall it can colide
+                            # CAREFUL shot on edges (add 1 to extremities of walls? or check if the bullet intersect the extremity THIS IS IMPORTANT)
                             for wall in walls:
                                 x1, y1 = wall[0]
                                 x2, y2 = wall[1]
@@ -90,12 +95,18 @@ def background_thread(app=None):
                     bullets_to_remove = []
 
                 # TODO create two lists, bullets and players, separate the entities list
+
+                # TODO send only changes to frontend, not always all the users
+                # eg, send only who moved or who disconnected, and frontend update its user list
+
                 for bullet in entities:
                     if bullet['type'] == 'bullet':
                         for player in entities:
                             # TODO instead of comparing with all the players
                             # check when creating the bullet which players cannot be hit
                             # (the ones on the back of the bullet and the player that shoot cannot be hit)
+                            # use back of the bullet or trace a line of the bullet +-30 degrees and compare only to 
+                            # players in the sight? 
                             if player['type'] == 'player' and player['alive'] == 'yes':
                                 x1, y1 = player["x"] - 15, player["y"] - 15
                                 x2, y2 = player["x"] + 15, player["y"] + 15

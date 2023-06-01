@@ -23,6 +23,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 entities = []
 changes = []
 thread = None
+# TODO create another file just to store the walls for
+# the shadow file and here (to use on the bullets too)
 walls = [
     [[80, 80], [130, 290]],
     [[130, 80], [80, 290]],
@@ -75,6 +77,11 @@ def background_thread(app=None):
                         if not (0 <= entity['x'] <= 400 and 0 <= entity['y'] <= 400):
                             bullets_to_remove.append(entity)
                         else:
+                            # TODO define when creating the bullet, the wall that it can collide, there is only one
+                            # instead of comparing with all the walls
+                            # try to intersect the line of the bullet and the lines of the walls, 
+                            # compare only with the wall it can colide
+                            # CAREFUL shot on edges (add 1 to extremities of walls? or check if the bullet intersect the extremity THIS IS IMPORTANT)
                             for wall in walls:
                                 x1, y1 = wall[0]
                                 x2, y2 = wall[1]
@@ -88,9 +95,18 @@ def background_thread(app=None):
                     bullets_to_remove = []
 
                 # TODO create two lists, bullets and players, separate the entities list
+
+                # TODO send only changes to frontend, not always all the users
+                # eg, send only who moved or who disconnected, and frontend update its user list
+
                 for bullet in entities:
                     if bullet['type'] == 'bullet':
                         for player in entities:
+                            # TODO instead of comparing with all the players
+                            # check when creating the bullet which players cannot be hit
+                            # (the ones on the back of the bullet and the player that shoot cannot be hit)
+                            # use back of the bullet or trace a line of the bullet +-30 degrees and compare only to 
+                            # players in the sight? 
                             if player['type'] == 'player' and player['alive'] == 'yes':
                                 x1, y1 = player["x"] - 15, player["y"] - 15
                                 x2, y2 = player["x"] + 15, player["y"] + 15
@@ -108,10 +124,7 @@ def background_thread(app=None):
 
                 if changes or bullets_to_update:
                     socket_start_time = time.time()
-                    # socketio.emit('update_entities', entities)
-                    for entity in entities:
-                        if entity['type'] == 'player':
-                            socketio.emit('update_entities', entities, room=entity['id'])
+                    socketio.emit('update_entities', entities)
                     socket_end_time = time.time()
                     execution_times.append(socket_end_time - socket_start_time)
                     formatted_time = "{:.1f} ms".format((sum(execution_times) / len(execution_times)) * 1000)
@@ -138,6 +151,10 @@ def handle_connect():
     global thread
 
     name = request.args.get('name')
+    # TODO use another structure to store id and name, this way
+    # the id wont be sent to frontend
+    
+    # TODO send another structure to the frontend, in a way that you dont need the 'type' key.
     new_user = {'id': request.sid, 'name': name, 'x': 0, 'y': 0, 'shadow': [], 'angle': 0, 'type': 'player', 'alive': 'yes'}
     new_user['shadow'] = get_shadows((new_user['x'], new_user['y']))
     with changes_lock:
