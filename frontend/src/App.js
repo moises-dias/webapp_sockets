@@ -43,6 +43,7 @@ function InputScreen({ onSubmit }) {
 function App({ userName }) {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
+  const [bullets, setBullets] = useState([]);
   // TODO block commands if player is dead
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [lastAngle, setLastAngle] = useState(0);
@@ -53,6 +54,11 @@ function App({ userName }) {
   useEffect(() => {
     usersRef.current = users;
   }, [users]);
+
+  const bulletsRef = useRef(bullets);
+  useEffect(() => {
+    bulletsRef.current = bullets;
+  }, [bullets]);
 
   const mouseCursorRef = useRef(mouseCursor);
   useEffect(() => {
@@ -66,30 +72,27 @@ function App({ userName }) {
 
   const drawPlayers = (context, users) => {
     for (let i = 0; i < users.length; i++) {
-      // const angle = Math.atan2(mouseCursor.y - users[i].y, mouseCursor.x - users[i].x);
       context.save();
       context.translate(users[i].x, users[i].y);
       context.rotate(users[i].angle + Math.PI / 2);
-      // starting at -15 and width of 30.
-      // add if type == player or type == bullet
-      // to change the image and size
-      if (users[i].type === 'player') {
-        if (users[i].alive === 'yes') {
-          context.drawImage(playerImage, -15, -15, 30, 30);
-        }
-        else {
-          context.drawImage(deadPlayerImage, -15, -15, 30, 30);
-        }
+      if (users[i].alive === 'yes') {
+        context.drawImage(playerImage, -15, -15, 30, 30);
       }
-      else if (users[i].type === 'bullet') {
-        context.drawImage(bulletImage, -10, -10, 20, 20);
+      else {
+        context.drawImage(deadPlayerImage, -15, -15, 30, 30);
       }
-
       context.restore();
-      // TODO add if entity = player before drawing its name
-      if (users[i].type === 'player') {
-        context.fillText(users[i].name, users[i].x - 20, users[i].y + 5);
-      }
+      context.fillText(users[i].name, users[i].x - 20, users[i].y + 5);
+    }
+  };
+
+  const drawBullets = (context, bullets) => {
+    for (let i = 0; i < bullets.length; i++) {
+      context.save();
+      context.translate(bullets[i].x, bullets[i].y);
+      context.rotate(bullets[i].angle + Math.PI / 2);
+      context.drawImage(bulletImage, -10, -10, 20, 20);
+      context.restore();
     }
   };
 
@@ -158,7 +161,7 @@ function App({ userName }) {
       if (event.button === 0) {
         const player = usersRef.current.find(item => item.name === userName);
         if (player === undefined) {
-          console.log("PLAYER UNDEFINED");
+          // console.log("PLAYER UNDEFINED");
           return;
         }
         if (player.alive === 'yes') {
@@ -179,8 +182,10 @@ function App({ userName }) {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('update_entities', users => {
-      setUsers(users);
+    socket.on('update_entities', entities => {
+      // console.log(entities)
+      setUsers(entities.players);
+      setBullets(entities.bullets);
     });
 
     return () => {
@@ -197,7 +202,7 @@ function App({ userName }) {
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
         const player = usersRef.current.find(item => item.name === userName);
         if (player === undefined) {
-          console.log("PLAYER UNDEFINED");
+          // console.log("PLAYER UNDEFINED");
           return;
         }
         if (player.alive === 'yes') {
@@ -213,7 +218,7 @@ function App({ userName }) {
       if (MOVEMENT_KEYS.includes(event.keyCode)) {
         const player = usersRef.current.find(item => item.name === userName);
         if (player === undefined) {
-          console.log("PLAYER UNDEFINED");
+          // console.log("PLAYER UNDEFINED");
           return;
         }
         if (player.alive === 'yes') {
@@ -239,10 +244,10 @@ function App({ userName }) {
     const context = canvas.getContext('2d');
     drawCanvas(context);
     drawPlayers(context, users);
-
+    drawBullets(context, bulletsRef.current);
     const player = users.find(item => item.name === userName);
     if (player === undefined) {
-      console.log("PLAYER UNDEFINED");
+      // console.log("PLAYER UNDEFINED");
       return;
     }
 
@@ -272,7 +277,7 @@ function App({ userName }) {
     // current - last mouse cursor in x and y is greater than a threshold
     const player = usersRef.current.find(item => item.name === userName);
     if (player === undefined) {
-      console.log("PLAYER UNDEFINED");
+      // console.log("PLAYER UNDEFINED");
       return;
     }
     if (player.alive === 'yes') {
