@@ -100,7 +100,7 @@ function App({ userName }) {
   const drawRestartMessage = (context, player) => {
     if (player.alive != 'yes') {
       
-      const text1 = 'Killed by ---';
+      const text1 = 'Killed by ' + player.killed_by;
       const text2 = 'Press ENTER to restart';
 
       context.font = 'bold 30px sans-serif';

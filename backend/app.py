@@ -104,6 +104,7 @@ def background_thread(app=None):
                             if x1 <= bullet['info']['x'] <= x2 and y1 <= bullet['info']['y'] <= y2:
                                 print_red("HIT!!!!!!!!!!!!!")
                                 player['info']['alive'] = 'no'
+                                player['info']['killed_by'] = bullet['owner']
                                 all_entities.remove_entity('bullet', bullet) # if the iteration is not reversed this will break the code 
 
                 if send_update:
@@ -156,6 +157,8 @@ def handle_respawn(data):
     with changes_lock:
         player = next((p for p in all_entities.players_backend if p['id'] == request.sid), None)
         if player is not None:
+            if 'killed_by' in player['info']:
+                del player['info']['killed_by']
             player['info']['alive'] = 'yes'
             player['info']['x'] = 50
             player['info']['y'] = 50
@@ -193,10 +196,14 @@ def handle_update_angle(data):
 def handle_left_click(data):
     global all_entities
 
+    bullet_owner = ""
+    player = next((p for p in all_entities.players_backend if p['id'] == request.sid), None)
+    if player is not None:
+        bullet_owner = player['info']['name']
     ite_x = math.cos(data['angle'])
     ite_y = math.sin(data['angle'])
     info = {'x': data['x'] + ite_x * 15, 'y': data['y'] + ite_y * 15, 'angle': data['angle']}
-    new_bullet = {'ite_x': ite_x * 30, 'ite_y': ite_y * 30, "info": info}
+    new_bullet = {'ite_x': ite_x * 30, 'ite_y': ite_y * 30, 'owner': bullet_owner, "info": info}
     with changes_lock:
         all_entities.add('bullet', new_bullet)
 
