@@ -149,6 +149,20 @@ def handle_disconnect():
             player['action']['disconnect'] = ''
     print_green(f"{request.sid} disconnected")
 
+@socketio.on('respawn')
+def handle_respawn(data):
+    global all_entities
+
+    with changes_lock:
+        player = next((p for p in all_entities.players_backend if p['id'] == request.sid), None)
+        if player is not None:
+            player['info']['alive'] = 'yes'
+            player['info']['x'] = 50
+            player['info']['y'] = 50
+            player['info']['shadow'] = get_shadows((player['info']['x'], player['info']['y']))
+            player['action']['respawn'] = ''
+    print_green(f"{request.sid} respawn -----------------")
+
 
 @socketio.on('update_angle')
 def handle_update_angle(data):

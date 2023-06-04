@@ -9,6 +9,7 @@ const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 400;
 const CANVAS_BORDER_STYLE = '1px solid black';
 const MOVEMENT_KEYS = [87, 83, 65, 68];
+const ENTER_KEY = 13;
 
 const backgroundImage = new Image();
 const playerImage = new Image();
@@ -199,12 +200,21 @@ function App({ userName }) {
 
     const handleKeyPress = (event) => {
       if (event.repeat) return;
-      if (MOVEMENT_KEYS.includes(event.keyCode)) {
+
+      if (MOVEMENT_KEYS.includes(event.keyCode) || event.keyCode === ENTER_KEY) {
         const player = usersRef.current.find(item => item.name === userName);
         if (player === undefined) {
           // console.log("PLAYER UNDEFINED");
           return;
         }
+
+        if (event.keyCode === ENTER_KEY) {
+          if (player.alive === 'no') {
+            socket.emit('respawn', {});
+          }
+          return;
+        }
+
         if (player.alive === 'yes') {
           socket.emit('start_moving', { direction: event.keyCode });
         }
