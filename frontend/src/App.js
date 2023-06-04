@@ -154,7 +154,23 @@ function App({ userName }) {
     };
   }, []);
 
-  // handle mouse click
+  // mouse leave the window
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleWindowBlur = () => {
+      socket.emit('mouse_out', {});
+      // console.log('Window lost focus');
+    };
+
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [socket]);
+
+  // handle mouse clickdwa
   useEffect(() => {
     if (!socket) return;
 

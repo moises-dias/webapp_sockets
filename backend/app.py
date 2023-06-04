@@ -164,6 +164,20 @@ def handle_respawn(data):
     print_green(f"{request.sid} respawn -----------------")
 
 
+@socketio.on('mouse_out')
+def handle_mouse_out(data):
+    global all_entities
+
+    with changes_lock:
+        player = next((p for p in all_entities.players_backend if p['id'] == request.sid), None)
+        if player is not None:
+            if 'movement' in player['action']:
+                del player['action']['movement']
+            # TODO when shooting be an action like movement (press and hold)
+            # remove shooting here too
+    print_green(f"{request.sid} stop movement XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
+
+
 @socketio.on('update_angle')
 def handle_update_angle(data):
     global all_entities
